@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cart & Checkout — AgriKonnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f8fafc;color:#1e293b}
+nav{position:sticky;top:0;z-index:50}
+
+/* Steps */
+.step-circle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;transition:all .3s;flex-shrink:0}
+.step-circle.done{background:#059669;color:white}
+.step-circle.active{background:#059669;color:white;box-shadow:0 0 0 4px rgba(5,150,105,0.2)}
+.step-circle.pending{background:#f1f5f9;color:#94a3b8;border:2px solid #e2e8f0}
+.step-line{flex:1;height:2px;transition:background .3s}
+.step-line.done{background:#059669}
+.step-line.pending{background:#e2e8f0}
+.step-label{font-size:12px;font-weight:500;margin-top:4px;transition:color .3s}
+.step-label.active,.step-label.done{color:#059669}
+.step-label.pending{color:#94a3b8}
+
+/* Payment option -->
+.pay-option{border:2px solid #e2e8f0;border-radius:12px;padding:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:12px}
+.pay-option:hover{border-color:#059669;background:#f0fdf4}
+.pay-option.selected{border-color:#059669;background:#f0fdf4}
+.pay-radio{width:18px;height:18px;border-radius:50%;border:2px solid #e2e8f0;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.pay-option.selected .pay-radio{border-color:#059669}
+.pay-option.selected .pay-radio::after{content:'';width:8px;height:8px;border-radius:50%;background:#059669;display:block}
+
+/* Cart item */
+.cart-item{background:white;border:1.5px solid #e2e8f0;border-radius:16px;padding:16px;transition:all .2s}
+.cart-item:hover{border-color:#6ee7b7}
+
+/* Qty btn */
+.qty-btn{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1.5px solid #e2e8f0;cursor:pointer;font-size:16px;transition:all .2s;background:white}
+.qty-btn:hover{border-color:#059669;color:#059669}
+
+/* Summary box */
+.summary-box{background:white;border:1.5px solid #e2e8f0;border-radius:16px;padding:20px}
+
+/* Escrow box */
+.escrow-box{background:linear-gradient(135deg,#ede9fe,#ddd6fe);border:1px solid #c4b5fd;border-radius:12px;padding:14px}
+
+/* Badge */
+.badge-escrow{background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;font-size:11px;padding:2px 8px;border-radius:999px}
+
+/* Input style */
+.form-input{width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;transition:border .2s;background:white}
+.form-input:focus{border-color:#059669}
+.form-label{font-size:13px;font-weight:600;color:#374151;margin-bottom:5px;display:block}
+
+/* Delivery option */
+.delivery-option{border:2px solid #e2e8f0;border-radius:12px;padding:14px;cursor:pointer;transition:all .2s}
+.delivery-option:hover{border-color:#059669;background:#f0fdf4}
+.delivery-option.selected{border-color:#059669;background:#f0fdf4}
+
+/* Success modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:white;border-radius:24px;padding:32px;max-width:420px;width:100%;text-align:center;animation:popIn .3s}
+@keyframes popIn{from{transform:scale(0.8);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* View toggle */
+.view{display:none}
+.view.active{display:block}
+
+/* Animate in */
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .3s ease forwards}
+
+/* Mobile responsive */
+@media(max-width:768px){
+  .checkout-cols{flex-direction:column!important}
+  .summary-sticky{position:static!important;top:auto!important}
+}
+</style>
+</head>
+<body>
+
+<!-- SUCCESS MODAL -->
+<div id="success-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4" style="background:#d1fae5">
+      <svg class="w-10 h-10" style="color:#059669" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <h2 class="font-bold text-xl mb-2" style="color:#0f172a">Order Placed! 🎉</h2>
+    <p class="text-sm mb-1" style="color:#64748b">Order <strong style="color:#059669">#AK-2026-00847</strong></p>
+    <p class="text-sm mb-4" style="color:#64748b">Your payment is held in escrow. The farmer has been notified and will confirm your order shortly.</p>
+    <div class="rounded-xl p-3 mb-4 text-sm" style="background:#f0fdf4;border:1px solid #6ee7b7;color:#065f46">
+      <p>💳 <strong>₵22.54</strong> held in escrow via MTN MoMo</p>
+      <p class="text-xs mt-1" style="color:#059669">Funds release to Kofi Mensah only after you confirm delivery</p>
+    </div>
+    <p class="text-xs mb-4" style="color:#64748b">📱 SMS confirmation sent to your number · Check your AgriKonnect messages for farmer contact</p>
+    <div class="flex gap-2">
+      <button onclick="closeModal()" class="flex-1 py-3 rounded-xl font-semibold border" style="border-color:#e2e8f0;color:#475569">Continue Shopping</button>
+      <button class="flex-1 py-3 rounded-xl font-semibold text-white" style="background:#059669">Track Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav style="background:rgba(0,65,59,0.97);border-bottom:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(8px)">
+  <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-4">
+    <a href="AgriKonnect_Homepage_Preview.html" class="flex items-center gap-2">
+      <div class="w-7 h-7 bg-emerald-500 rounded-lg flex items-center justify-center">
+        <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945"/></svg>
+      </div>
+      <span class="text-white font-bold text-lg">AgriKonnect</span>
+    </a>
+    <div class="flex-1"></div>
+    <div class="flex items-center gap-2">
+      <span class="text-sm" style="color:rgba(255,255,255,0.7)">Secured by</span>
+      <span class="badge-escrow">🔒 Escrow</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ CART VIEW ============ -->
+<div id="view-cart" class="view active">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+
+    <!-- Header -->
+    <div class="flex items-center gap-3 mb-6">
+      <a href="AgriKonnect_Browse_Page.html" class="w-9 h-9 rounded-full flex items-center justify-center border" style="border-color:#e2e8f0;color:#475569">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </a>
+      <div>
+        <h1 class="font-bold text-xl" style="color:#0f172a">My Cart</h1>
+        <p class="text-sm" style="color:#64748b">3 items from 2 farmers</p>
+      </div>
+    </div>
+
+    <div class="flex gap-6 checkout-cols">
+      <!-- Cart Items -->
+      <div class="flex-1 space-y-4">
+
+        <!-- Item 1 -->
+        <div class="cart-item fade-up">
+          <div class="flex gap-4">
+            <div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+              <img src="https://images.unsplash.com/photo-1546793665-c74683f339c1?w=200&h=200&fit=crop" class="w-full h-full object-cover" alt="Tomatoes">
+            </div>
+            <div class="flex-1">
+              <div class="flex items-start justify-between">
+                <div>
+                  <h3 class="font-semibold text-sm" style="color:#0f172a">Roma Tomatoes</h3>
+                  <p class="text-xs" style="color:#64748b">Kofi Mensah · Kumasi, Ashanti</p>
+                  <span class="inline-block text-xs px-2 py-0.5 rounded-full mt-1" style="background:#fef3c7;color:#92400e;border:1px solid #fcd34d">🔥 Hot Deal</span>
+                </div>
+                <button onclick="removeItem(this)" class="text-xs" style="color:#f87171">Remove</button>
+              </div>
+              <div class="flex items-center justify-between mt-3">
+                <div class="flex items-center gap-2">
+                  <button class="qty-btn" onclick="changeCartQty(this,-1)">−</button>
+                  <span class="w-8 text-center font-bold text-sm" data-qty="2">2</span>
+                  <button class="qty-btn" onclick="changeCartQty(this,1)">+</button>
+                  <span class="text-xs" style="color:#94a3b8">kg</span>
+                </div>
+                <div class="text-right">
+                  <p class="font-bold" style="color:#059669">₵14.40</p>
+                  <p class="text-xs" style="color:#94a3b8">₵7.20/kg</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 2 -->
+        <div class="cart-item fade-up" style="animation-delay:.1s">
+          <div class="flex gap-4">
+            <div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+              <img src="https://images.unsplash.com/photo-1596591868231-05e66ee29b1a?w=200&h=200&fit=crop" class="w-full h-full object-cover" alt="Yam">
+            </div>
+            <div class="flex-1">
+              <div class="flex items-start justify-between">
+                <div>
+                  <h3 class="font-semibold text-sm" style="color:#0f172a">Pona Yam</h3>
+                  <p class="text-xs" style="color:#64748b">Ama Adusei · Volta Region</p>
+                  <span class="inline-block text-xs px-2 py-0.5 rounded-full mt-1" style="background:#dbeafe;color:#1e40af;border:1px solid #93c5fd">✅ Fair Price</span>
+                </div>
+                <button onclick="removeItem(this)" class="text-xs" style="color:#f87171">Remove</button>
+              </div>
+              <div class="flex items-center justify-between mt-3">
+                <div class="flex items-center gap-2">
+                  <button class="qty-btn" onclick="changeCartQty(this,-1)">−</button>
+                  <span class="w-8 text-center font-bold text-sm" data-qty="1">1</span>
+                  <button class="qty-btn" onclick="changeCartQty(this,1)">+</button>
+                  <span class="text-xs" style="color:#94a3b8">tuber</span>
+                </div>
+                <div class="text-right">
+                  <p class="font-bold" style="color:#059669">₵14.50</p>
+                  <p class="text-xs" style="color:#94a3b8">₵14.50/tuber</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 3 -->
+        <div class="cart-item fade-up" style="animation-delay:.2s">
+          <div class="flex gap-4">
+            <div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+              <img src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=200&h=200&fit=crop" class="w-full h-full object-cover" alt="Pepper">
+            </div>
+            <div class="flex-1">
+              <div class="flex items-start justify-between">
+                <div>
+                  <h3 class="font-semibold text-sm" style="color:#0f172a">Scotch Bonnet Pepper</h3>
+                  <p class="text-xs" style="color:#64748b">Kofi Mensah · Kumasi, Ashanti</p>
+                  <span class="inline-block text-xs px-2 py-0.5 rounded-full mt-1" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5">⚠ Above Market</span>
+                </div>
+                <button onclick="removeItem(this)" class="text-xs" style="color:#f87171">Remove</button>
+              </div>
+              <div class="flex items-center justify-between mt-3">
+                <div class="flex items-center gap-2">
+                  <button class="qty-btn" onclick="changeCartQty(this,-1)">−</button>
+                  <span class="w-8 text-center font-bold text-sm" data-qty="1">1</span>
+                  <button class="qty-btn" onclick="changeCartQty(this,1)">+</button>
+                  <span class="text-xs" style="color:#94a3b8">kg</span>
+                </div>
+                <div class="text-right">
+                  <p class="font-bold" style="color:#059669">₵22.00</p>
+                  <p class="text-xs" style="color:#94a3b8">₵22.00/kg</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Continue shopping -->
+        <a href="AgriKonnect_Browse_Page.html" class="flex items-center gap-2 text-sm font-medium py-3" style="color:#059669">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          Continue Shopping
+        </a>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="w-80 flex-shrink-0">
+        <div class="summary-box mb-4">
+          <h3 class="font-bold mb-4" style="color:#0f172a">Order Summary</h3>
+          <div class="space-y-3 pb-3" style="border-bottom:1px solid #f1f5f9">
+            <div class="flex justify-between text-sm">
+              <span style="color:#64748b">Subtotal (3 items)</span>
+              <span class="font-medium">₵50.90</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span style="color:#64748b">Service fee (3%)</span>
+              <span class="font-medium">₵1.53</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span style="color:#64748b">Delivery</span>
+              <span class="font-medium" style="color:#f59e0b">TBD — team will contact you</span>
+            </div>
+          </div>
+          <div class="flex justify-between items-center pt-3 mb-4">
+            <span class="font-bold" style="color:#0f172a">Total (excl. delivery)</span>
+            <span class="font-bold text-xl" style="color:#059669">₵52.43</span>
+          </div>
+          <!-- Coupon -->
+          <div class="flex gap-2 mb-4">
+            <input type="text" placeholder="Promo code" class="form-input flex-1" style="padding:8px 12px">
+            <button class="px-4 py-2 rounded-lg text-sm font-semibold" style="background:#f0fdf4;color:#059669;border:1px solid #6ee7b7">Apply</button>
+          </div>
+          <button onclick="goToCheckout()" class="w-full py-3.5 rounded-xl font-bold text-white text-base" style="background:#059669">
+            Proceed to Checkout →
+          </button>
+        </div>
+        <!-- Escrow note -->
+        <div class="escrow-box">
+          <p class="font-semibold text-sm mb-1" style="color:#4c1d95">🔒 100% Escrow Protected</p>
+          <p class="text-xs leading-relaxed" style="color:#5b21b6">Your payment is held safely until you confirm delivery. Pay via MTN MoMo, Vodafone Cash, or AirtelTigo Money.</p>
+        </div>
+        <!-- Farmer breakdown -->
+        <div class="mt-4 p-4 rounded-xl" style="background:white;border:1.5px solid #e2e8f0">
+          <h4 class="font-semibold text-sm mb-3" style="color:#0f172a">Items by Farmer</h4>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-sm">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-full overflow-hidden"><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop&crop=face" class="w-full h-full object-cover"></div>
+                <span style="color:#64748b">Kofi Mensah</span>
+              </div>
+              <span class="font-medium">₵36.40</span>
+            </div>
+            <div class="flex items-center justify-between text-sm">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs" style="background:#d1fae5;color:#065f46">AA</div>
+                <span style="color:#64748b">Ama Adusei</span>
+              </div>
+              <span class="font-medium">₵14.50</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- end cart view -->
+
+<!-- ============ CHECKOUT VIEW ============ -->
+<div id="view-checkout" class="view">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+
+    <!-- Back + Title -->
+    <div class="flex items-center gap-3 mb-6">
+      <button onclick="goToCart()" class="w-9 h-9 rounded-full flex items-center justify-center border" style="border-color:#e2e8f0;color:#475569">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <div>
+        <h1 class="font-bold text-xl" style="color:#0f172a">Checkout</h1>
+        <p class="text-sm" style="color:#64748b">Complete your order securely</p>
+      </div>
+    </div>
+
+    <!-- STEP INDICATOR -->
+    <div class="flex items-start gap-0 mb-8">
+      <div class="flex flex-col items-center">
+        <div class="step-circle done" id="step-circle-1">✓</div>
+        <span class="step-label done" id="step-label-1">Delivery</span>
+      </div>
+      <div class="step-line done flex-1 mt-4" id="step-line-1"></div>
+      <div class="flex flex-col items-center">
+        <div class="step-circle active" id="step-circle-2">2</div>
+        <span class="step-label active" id="step-label-2">Payment</span>
+      </div>
+      <div class="step-line pending flex-1 mt-4" id="step-line-2"></div>
+      <div class="flex flex-col items-center">
+        <div class="step-circle pending" id="step-circle-3">3</div>
+        <span class="step-label pending" id="step-label-3">Confirm</span>
+      </div>
+    </div>
+
+    <div class="flex gap-6 checkout-cols">
+      <!-- Left: Form steps -->
+      <div class="flex-1">
+
+        <!-- STEP 1: Delivery -->
+        <div id="step-1" class="" style="display:none">
+          <div class="bg-white rounded-2xl p-6" style="border:1.5px solid #e2e8f0">
+            <h2 class="font-bold mb-4" style="color:#0f172a">Delivery Preference</h2>
+            <div class="space-y-3 mb-6">
+              <div class="delivery-option selected" onclick="selectDelivery(this,'pickup')">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background:#f0fdf4">
+                    <svg class="w-5 h-5" style="color:#059669" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                  </div>
+                  <div class="flex-1">
+                    <p class="font-semibold text-sm">Farm Pickup — Free</p>
+                    <p class="text-xs" style="color:#64748b">Coordinate with farmer via in-app message. You arrange transport.</p>
+                  </div>
+                  <span class="font-bold text-sm" style="color:#059669">Free</span>
+                </div>
+              </div>
+              <div class="delivery-option" onclick="selectDelivery(this,'delivery')">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background:#fef3c7">
+                    <svg class="w-5 h-5" style="color:#92400e" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m-4 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                  </div>
+                  <div class="flex-1">
+                    <p class="font-semibold text-sm">Arrange Delivery</p>
+                    <p class="text-xs" style="color:#64748b">Our team will contact you to coordinate logistics. Cost quoted separately.</p>
+                  </div>
+                  <span class="font-bold text-sm" style="color:#f59e0b">TBD</span>
+                </div>
+              </div>
+            </div>
+            <!-- Contact info -->
+            <h3 class="font-semibold text-sm mb-3" style="color:#0f172a">Your Contact Details</h3>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-input" value="Abena Kyei" placeholder="Your full name">
+              </div>
+              <div>
+                <label class="form-label">Phone Number</label>
+                <input type="tel" class="form-input" value="055 123 4567" placeholder="0XX XXX XXXX">
+              </div>
+              <div class="col-span-2">
+                <label class="form-label">Location / Area</label>
+                <input type="text" class="form-input" placeholder="e.g. Accra, East Legon, Kumasi CBD..." value="Kumasi Central">
+              </div>
+              <div class="col-span-2">
+                <label class="form-label">Additional Notes (Optional)</label>
+                <textarea class="form-input" rows="2" placeholder="Any special instructions for the farmer or delivery..."></textarea>
+              </div>
+            </div>
+            <button onclick="goToStep(2)" class="w-full mt-4 py-3 rounded-xl font-bold text-white" style="background:#059669">Continue to Payment →</button>
+          </div>
+        </div>
+
+        <!-- STEP 2: Payment -->
+        <div id="step-2" class="">
+          <div class="bg-white rounded-2xl p-6" style="border:1.5px solid #e2e8f0">
+            <h2 class="font-bold mb-1" style="color:#0f172a">Choose Payment Method</h2>
+            <p class="text-sm mb-5" style="color:#64748b">Your payment will be held in escrow until you confirm delivery</p>
+
+            <div class="space-y-3 mb-6">
+              <!-- MTN MoMo -->
+              <div class="pay-option selected" onclick="selectPay(this)" data-method="mtn">
+                <div class="pay-radio"></div>
+                <div class="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
+                  <div class="w-full h-full flex items-center justify-center font-bold text-xs" style="background:#FFCC00;color:#333">MTN</div>
+                </div>
+                <div class="flex-1">
+                  <p class="font-semibold text-sm">MTN Mobile Money</p>
+                  <p class="text-xs" style="color:#64748b">Pay with your MTN MoMo wallet</p>
+                </div>
+                <span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background:#fef3c7;color:#92400e">Most Popular</span>
+              </div>
+              <!-- Vodafone Cash -->
+              <div class="pay-option" onclick="selectPay(this)" data-method="vodafone">
+                <div class="pay-radio"></div>
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-xs" style="background:#E60000;color:white">VF</div>
+                <div class="flex-1">
+                  <p class="font-semibold text-sm">Vodafone Cash</p>
+                  <p class="text-xs" style="color:#64748b">Pay with Vodafone Cash balance</p>
+                </div>
+              </div>
+              <!-- AirtelTigo -->
+              <div class="pay-option" onclick="selectPay(this)" data-method="airteltigo">
+                <div class="pay-radio"></div>
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-xs" style="background:#e91e8c;color:white">AT</div>
+                <div class="flex-1">
+                  <p class="font-semibold text-sm">AirtelTigo Money</p>
+                  <p class="text-xs" style="color:#64748b">Pay with AirtelTigo Money</p>
+                </div>
+              </div>
+              <!-- Bank -->
+              <div class="pay-option" onclick="selectPay(this)" data-method="bank">
+                <div class="pay-radio"></div>
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#f1f5f9">
+                  <svg class="w-5 h-5" style="color:#475569" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                </div>
+                <div class="flex-1">
+                  <p class="font-semibold text-sm">Bank Transfer</p>
+                  <p class="text-xs" style="color:#64748b">GCB, Fidelity, Ecobank and others</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- MoMo phone input -->
+            <div id="momo-input" class="rounded-xl p-4 mb-4" style="background:#fffbeb;border:1.5px solid #fcd34d">
+              <label class="form-label" style="color:#92400e">MTN MoMo Number</label>
+              <div class="flex gap-2">
+                <div class="flex items-center px-3 rounded-lg font-medium text-sm" style="background:#FFCC00;color:#333">+233</div>
+                <input type="tel" class="form-input flex-1" placeholder="5X XXX XXXX" value="055 234 5678">
+              </div>
+              <p class="text-xs mt-2" style="color:#92400e">📱 You will receive a MoMo push notification to approve this payment of <strong>₵52.43</strong></p>
+            </div>
+
+            <div class="flex gap-3">
+              <button onclick="goToStep(1)" class="px-5 py-3 rounded-xl font-semibold border" style="border-color:#e2e8f0;color:#475569">← Back</button>
+              <button onclick="goToStep(3)" class="flex-1 py-3 rounded-xl font-bold text-white" style="background:#059669">Review Order →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: Confirm -->
+        <div id="step-3" style="display:none">
+          <div class="bg-white rounded-2xl p-6" style="border:1.5px solid #e2e8f0">
+            <h2 class="font-bold mb-4" style="color:#0f172a">Review & Confirm Order</h2>
+
+            <!-- Order items summary -->
+            <div class="space-y-3 pb-4 mb-4" style="border-bottom:1px solid #f1f5f9">
+              <div class="flex items-center gap-3">
+                <img src="https://images.unsplash.com/photo-1546793665-c74683f339c1?w=60&h=60&fit=crop" class="w-12 h-12 rounded-lg object-cover flex-shrink-0">
+                <div class="flex-1">
+                  <p class="font-medium text-sm">Roma Tomatoes × 2 kg</p>
+                  <p class="text-xs" style="color:#64748b">Kofi Mensah</p>
+                </div>
+                <span class="font-semibold text-sm">₵14.40</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <img src="https://images.unsplash.com/photo-1596591868231-05e66ee29b1a?w=60&h=60&fit=crop" class="w-12 h-12 rounded-lg object-cover flex-shrink-0">
+                <div class="flex-1">
+                  <p class="font-medium text-sm">Pona Yam × 1</p>
+                  <p class="text-xs" style="color:#64748b">Ama Adusei</p>
+                </div>
+                <span class="font-semibold text-sm">₵14.50</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <img src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=60&h=60&fit=crop" class="w-12 h-12 rounded-lg object-cover flex-shrink-0">
+                <div class="flex-1">
+                  <p class="font-medium text-sm">Scotch Bonnet × 1 kg</p>
+                  <p class="text-xs" style="color:#64748b">Kofi Mensah</p>
+                </div>
+                <span class="font-semibold text-sm">₵22.00</span>
+              </div>
+            </div>
+
+            <!-- Delivery + Payment summary -->
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <div class="rounded-xl p-3" style="background:#f8fafc;border:1px solid #e2e8f0">
+                <p class="text-xs font-semibold mb-1" style="color:#64748b">DELIVERY</p>
+                <p class="text-sm font-medium">Farm Pickup</p>
+                <p class="text-xs" style="color:#059669">Free</p>
+              </div>
+              <div class="rounded-xl p-3" style="background:#f8fafc;border:1px solid #e2e8f0">
+                <p class="text-xs font-semibold mb-1" style="color:#64748b">PAYMENT</p>
+                <p class="text-sm font-medium">MTN MoMo</p>
+                <p class="text-xs" style="color:#64748b">055 234 5678</p>
+              </div>
+            </div>
+
+            <!-- Totals -->
+            <div class="rounded-xl p-4 mb-4" style="background:#f8fafc;border:1px solid #e2e8f0">
+              <div class="flex justify-between text-sm mb-2">
+                <span style="color:#64748b">Subtotal</span><span>₵50.90</span>
+              </div>
+              <div class="flex justify-between text-sm mb-2">
+                <span style="color:#64748b">Service fee (3%)</span><span>₵1.53</span>
+              </div>
+              <div class="flex justify-between text-sm mb-2">
+                <span style="color:#64748b">Delivery</span><span style="color:#059669">Free</span>
+              </div>
+              <div class="flex justify-between font-bold pt-2" style="border-top:1px solid #e2e8f0">
+                <span>Total to pay</span>
+                <span style="color:#059669;font-size:18px">₵52.43</span>
+              </div>
+            </div>
+
+            <!-- Escrow confirmation -->
+            <div class="escrow-box mb-4">
+              <p class="font-semibold text-sm mb-1" style="color:#4c1d95">🔒 What happens next?</p>
+              <ol class="text-xs space-y-1" style="color:#5b21b6">
+                <li>1. You approve ₵52.43 on your MTN MoMo push notification</li>
+                <li>2. Funds held in AgriKonnect escrow</li>
+                <li>3. Farmers are notified and prepare your order</li>
+                <li>4. Coordinate pickup/delivery via in-app message</li>
+                <li>5. You confirm receipt — funds released to farmers</li>
+              </ol>
+            </div>
+
+            <!-- T&C checkbox -->
+            <label class="flex items-start gap-2 mb-4 cursor-pointer">
+              <input type="checkbox" checked class="mt-0.5" style="accent-color:#059669;width:16px;height:16px">
+              <span class="text-xs" style="color:#64748b">I agree to AgriKonnect's <a href="#" style="color:#059669">Terms of Service</a> and understand that my payment is protected by escrow until I confirm delivery.</span>
+            </label>
+
+            <div class="flex gap-3">
+              <button onclick="goToStep(2)" class="px-5 py-3 rounded-xl font-semibold border" style="border-color:#e2e8f0;color:#475569">← Back</button>
+              <button onclick="placeOrder()" class="flex-1 py-3.5 rounded-xl font-bold text-white text-base" style="background:#059669">
+                Place Order — ₵52.43
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <!-- end form -->
+
+      <!-- Right: Order Summary Sidebar -->
+      <div class="w-72 flex-shrink-0">
+        <div class="summary-box summary-sticky" style="position:sticky;top:80px">
+          <h3 class="font-bold mb-4" style="color:#0f172a">Order Summary</h3>
+          <div class="space-y-3 pb-3 mb-3" style="border-bottom:1px solid #f1f5f9">
+            <div class="flex items-center gap-2">
+              <img src="https://images.unsplash.com/photo-1546793665-c74683f339c1?w=60&h=60&fit=crop" class="w-10 h-10 rounded-lg object-cover flex-shrink-0">
+              <div class="flex-1">
+                <p class="text-xs font-medium">Roma Tomatoes × 2kg</p>
+                <p class="text-xs" style="color:#94a3b8">₵7.20/kg</p>
+              </div>
+              <span class="text-xs font-bold">₵14.40</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <img src="https://images.unsplash.com/photo-1596591868231-05e66ee29b1a?w=60&h=60&fit=crop" class="w-10 h-10 rounded-lg object-cover flex-shrink-0">
+              <div class="flex-1">
+                <p class="text-xs font-medium">Pona Yam × 1</p>
+                <p class="text-xs" style="color:#94a3b8">₵14.50/tuber</p>
+              </div>
+              <span class="text-xs font-bold">₵14.50</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <img src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=60&h=60&fit=crop" class="w-10 h-10 rounded-lg object-cover flex-shrink-0">
+              <div class="flex-1">
+                <p class="text-xs font-medium">Scotch Bonnet × 1kg</p>
+                <p class="text-xs" style="color:#94a3b8">₵22.00/kg</p>
+              </div>
+              <span class="text-xs font-bold">₵22.00</span>
+            </div>
+          </div>
+          <div class="space-y-2 text-sm pb-3 mb-3" style="border-bottom:1px solid #f1f5f9">
+            <div class="flex justify-between"><span style="color:#64748b">Subtotal</span><span>₵50.90</span></div>
+            <div class="flex justify-between"><span style="color:#64748b">Service fee</span><span>₵1.53</span></div>
+            <div class="flex justify-between"><span style="color:#64748b">Delivery</span><span style="color:#059669">Free</span></div>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="font-bold">Total</span>
+            <span class="font-bold text-lg" style="color:#059669">₵52.43</span>
+          </div>
+          <div class="mt-3 p-3 rounded-xl text-xs" style="background:#f0fdf4;border:1px solid #6ee7b7;color:#065f46">
+            🔒 Funds protected in escrow until you confirm delivery
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<!-- end checkout view -->
+
+<!-- FOOTER -->
+<footer class="mt-12 py-6" style="background:#00413b;border-top:1px solid rgba(255,255,255,0.1)">
+  <div class="max-w-5xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-sm" style="color:#94a3b8">
+    <p>© 2026 AgriKonnect — All Rights Reserved</p>
+    <div class="flex gap-4">
+      <span style="color:#6ee7b7">🔒 SSL Secured</span>
+      <span style="color:#6ee7b7">🛡 Escrow Protected</span>
+      <span style="color:#6ee7b7">✓ Verified Farmers</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+function goToCheckout(){
+  document.getElementById('view-cart').classList.remove('active');
+  document.getElementById('view-checkout').classList.add('active');
+  window.scrollTo(0,0);
+  goToStep(2);
+}
+function goToCart(){
+  document.getElementById('view-checkout').classList.remove('active');
+  document.getElementById('view-cart').classList.add('active');
+  window.scrollTo(0,0);
+}
+function goToStep(n){
+  [1,2,3].forEach(i=>{
+    document.getElementById('step-'+i).style.display = i===n?'block':'none';
+    const c=document.getElementById('step-circle-'+i);
+    const l=document.getElementById('step-label-'+i);
+    if(i<n){c.className='step-circle done';c.textContent='✓';l.className='step-label done';}
+    else if(i===n){c.className='step-circle active';c.textContent=i;l.className='step-label active';}
+    else{c.className='step-circle pending';c.textContent=i;l.className='step-label pending';}
+    if(i<3){
+      const line=document.getElementById('step-line-'+i);
+      if(line) line.className='step-line '+(i<n?'done':'pending')+' flex-1 mt-4';
+    }
+  });
+}
+function selectPay(el){
+  document.querySelectorAll('.pay-option').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('momo-input').style.display = el.dataset.method==='mtn'?'block':'none';
+}
+function selectDelivery(el){
+  document.querySelectorAll('.delivery-option').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function removeItem(btn){
+  btn.closest('.cart-item').style.opacity='0';
+  btn.closest('.cart-item').style.transform='translateX(20px)';
+  btn.closest('.cart-item').style.transition='all .3s';
+  setTimeout(()=>btn.closest('.cart-item').remove(),300);
+}
+function changeCartQty(btn,delta){
+  const span=btn.parentElement.querySelector('[data-qty]');
+  const min=parseInt(span.dataset.qty)||1;
+  const cur=parseInt(span.textContent);
+  span.textContent=Math.max(min,cur+delta);
+}
+function placeOrder(){
+  document.getElementById('success-modal').style.display='flex';
+}
+function closeModal(){
+  document.getElementById('success-modal').style.display='none';
+  document.getElementById('view-checkout').classList.remove('active');
+  document.getElementById('view-cart').classList.add('active');
+}
+</script>
+
+<!-- DEMO NAVIGATION -->
+<div id="demoNav" style="position:fixed;bottom:20px;right:20px;z-index:9999;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <button onclick="document.getElementById('demoMenu').style.display=document.getElementById('demoMenu').style.display==='none'?'block':'none'" 
+    style="width:52px;height:52px;border-radius:50%;background:#00413b;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,65,59,0.4);display:flex;align-items:center;justify-content:center">
+    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <div id="demoMenu" style="display:none;position:absolute;bottom:60px;right:0;background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);border:1.5px solid #e2e8f0;min-width:220px;overflow:hidden">
+    <div style="background:#00413b;padding:10px 14px">
+      <p style="color:#34d399;font-size:10px;font-weight:700;letter-spacing:.05em;margin:0">AGRIKONNECT DEMO</p>
+      <p style="color:rgba(255,255,255,0.7);font-size:11px;margin:2px 0 0">Jump to any page</p>
+    </div>
+    <div style="padding:6px">
+      <a href="index.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🏠 Homepage</a>
+      <a href="AgriKonnect_Auth.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🔐 Login / Register</a>
+      <a href="AgriKonnect_Browse_Page.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🛒 Browse Produce</a>
+      <a href="AgriKonnect_Product_Detail.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🍅 Product Detail</a>
+      <a href="AgriKonnect_Cart_Checkout.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">💳 Cart + Checkout</a>
+      <div style="height:1px;background:#f1f5f9;margin:4px 6px"></div>
+      <a href="AgriKonnect_Farmer_Dashboard.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🌾 Farmer Dashboard</a>
+      <a href="AgriKonnect_Buyer_Dashboard.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📦 Buyer Dashboard</a>
+      <div style="height:1px;background:#f1f5f9;margin:4px 6px"></div>
+      <a href="AgriKonnect_Price_Intelligence.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📊 Price Intelligence</a>
+      <a href="AgriKonnect_Post_Request.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📋 Post a Request</a>
+    </div>
+  </div>
+</div>
+<!-- END DEMO NAVIGATION -->
+</body>
+</html>

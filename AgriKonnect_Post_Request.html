@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Post a Request — AgriKonnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f1f5f9;color:#1e293b}
+.navbar{background:#00413b;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
+.form-group{margin-bottom:18px}
+.form-label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px}
+.form-label span{color:#ef4444;margin-left:2px}
+.form-input{width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:14px;color:#1e293b;outline:none;transition:border-color .2s;background:white}
+.form-input:focus{border-color:#059669;box-shadow:0 0 0 3px rgba(5,150,105,0.08)}
+.form-select{width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:14px;color:#1e293b;outline:none;background:white;cursor:pointer}
+.form-select:focus{border-color:#059669}
+.form-textarea{width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:14px;color:#1e293b;outline:none;resize:none;transition:border-color .2s;background:white}
+.form-textarea:focus{border-color:#059669}
+.crop-chip{padding:6px 14px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;border:1.5px solid #e2e8f0;background:white;color:#64748b}
+.crop-chip:hover,.crop-chip.selected{background:#059669;color:white;border-color:#059669}
+.unit-btn{flex:1;padding:8px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;color:#64748b;background:white;text-align:center}
+.unit-btn.active{background:#f0fdf4;color:#059669;border-color:#6ee7b7}
+.freq-btn{flex:1;padding:9px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;color:#64748b;background:white;text-align:center}
+.freq-btn.active{background:#f0fdf4;color:#059669;border-color:#6ee7b7}
+.contact-btn{flex:1;padding:10px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;color:#64748b;background:white;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px}
+.contact-btn.active{background:#f0fdf4;color:#059669;border-color:#6ee7b7}
+.step-num{width:32px;height:32px;border-radius:50%;background:#059669;color:white;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.request-card{background:white;border:1.5px solid #e2e8f0;border-radius:16px;padding:16px;transition:all .2s}
+.request-card:hover{border-color:#6ee7b7;box-shadow:0 4px 12px rgba(0,0,0,0.06)}
+.status-open{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px}
+.status-matched{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px}
+.status-fulfilled{background:#f3f4f6;color:#4b5563;border:1px solid #d1d5db;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px}
+.offer-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid white;flex-shrink:0}
+.tick{width:20px;height:20px;border-radius:50%;background:#d1fae5;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.progress-line{height:2px;background:#e2e8f0;flex:1;margin:0 4px}
+.progress-line.done{background:#059669}
+.success-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;align-items:center;justify-content:center}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .35s ease forwards}
+.delay-1{animation-delay:.06s}.delay-2{animation-delay:.12s}.delay-3{animation-delay:.18s}
+@keyframes bounceIn{0%{transform:scale(0.7);opacity:0}60%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+.bounce-in{animation:bounceIn .4s ease forwards}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="flex items-center gap-3">
+    <a href="AgriKonnect_Homepage_Preview.html" class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background:#34d399">
+        <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945"/></svg>
+      </div>
+      <span class="font-bold text-white">AgriKonnect</span>
+    </a>
+    <span style="color:rgba(255,255,255,0.3)">›</span>
+    <span class="font-semibold" style="color:#6ee7b7;font-size:14px">Post a Request</span>
+  </div>
+  <div class="flex items-center gap-3">
+    <a href="AgriKonnect_Browse_Page.html" class="text-sm" style="color:rgba(255,255,255,0.7)">Browse Produce</a>
+    <a href="AgriKonnect_Buyer_Dashboard.html" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style="background:rgba(255,255,255,0.1)">My Dashboard</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div style="background:linear-gradient(135deg,#00413b 0%,#065f46 100%);padding:36px 24px">
+  <div class="max-w-4xl mx-auto text-center">
+    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4" style="background:rgba(52,211,153,0.15);border:1px solid #34d399">
+      <svg class="w-3.5 h-3.5" style="color:#34d399" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+      <span class="text-xs font-bold" style="color:#34d399">MVP Feature — New!</span>
+    </div>
+    <h1 class="font-bold text-white mb-3" style="font-size:28px">Post What You Need.<br>Let Farmers Come to You.</h1>
+    <p class="text-base mb-6" style="color:rgba(255,255,255,0.75);max-width:520px;margin:0 auto 24px">Tell verified farmers exactly what you want — crop, quantity, price, and date. Matching farmers respond directly with offers.</p>
+    <!-- 3 steps mini -->
+    <div class="flex items-center justify-center gap-2 flex-wrap">
+      <div class="flex items-center gap-2 px-4 py-2 rounded-xl" style="background:rgba(255,255,255,0.1)">
+        <span class="font-bold" style="color:#34d399;font-size:18px">1</span>
+        <span class="text-sm text-white">Post your request</span>
+      </div>
+      <svg class="w-4 h-4" style="color:rgba(255,255,255,0.3)" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      <div class="flex items-center gap-2 px-4 py-2 rounded-xl" style="background:rgba(255,255,255,0.1)">
+        <span class="font-bold" style="color:#34d399;font-size:18px">2</span>
+        <span class="text-sm text-white">Farmers send offers</span>
+      </div>
+      <svg class="w-4 h-4" style="color:rgba(255,255,255,0.3)" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      <div class="flex items-center gap-2 px-4 py-2 rounded-xl" style="background:rgba(255,255,255,0.1)">
+        <span class="font-bold" style="color:#34d399;font-size:18px">3</span>
+        <span class="text-sm text-white">You pick the best deal</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <div class="grid grid-cols-3 gap-6">
+
+    <!-- FORM (left 2 cols) -->
+    <div class="col-span-2">
+      <div class="bg-white rounded-2xl p-6" style="border:1.5px solid #e2e8f0">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#d1fae5">
+            <svg class="w-5 h-5" style="color:#059669" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          </div>
+          <div>
+            <h2 class="font-bold" style="color:#0f172a">Create Your Request</h2>
+            <p class="text-xs" style="color:#64748b">Fill in the details — verified farmers in your region will be notified</p>
+          </div>
+        </div>
+
+        <!-- Quick crop chips -->
+        <div class="form-group">
+          <label class="form-label">What crop do you need? <span>*</span></label>
+          <div class="flex flex-wrap gap-2 mb-3" id="cropChips">
+            <button class="crop-chip" onclick="selectCrop('Tomatoes',this)">Tomatoes</button>
+            <button class="crop-chip" onclick="selectCrop('Cassava',this)">Cassava</button>
+            <button class="crop-chip" onclick="selectCrop('Yam',this)">Yam</button>
+            <button class="crop-chip" onclick="selectCrop('Plantain',this)">Plantain</button>
+            <button class="crop-chip" onclick="selectCrop('Onion',this)">Onion</button>
+            <button class="crop-chip" onclick="selectCrop('Pepper',this)">Pepper</button>
+            <button class="crop-chip" onclick="selectCrop('Maize',this)">Maize</button>
+            <button class="crop-chip" onclick="selectCrop('Okro',this)">Okro</button>
+            <button class="crop-chip" onclick="selectCrop('Ginger',this)">Ginger</button>
+          </div>
+          <input type="text" id="cropInput" class="form-input" placeholder="Or type any crop name..." oninput="this.value&&clearChips()">
+        </div>
+
+        <!-- Quantity + Unit -->
+        <div class="form-group">
+          <label class="form-label">Quantity needed <span>*</span></label>
+          <div class="flex gap-3">
+            <input type="number" class="form-input" placeholder="e.g. 50" style="flex:1;min-width:0">
+            <div class="flex gap-1" style="flex:1">
+              <button class="unit-btn active" onclick="setUnit(this)">kg</button>
+              <button class="unit-btn" onclick="setUnit(this)">bags</button>
+              <button class="unit-btn" onclick="setUnit(this)">bunches</button>
+              <button class="unit-btn" onclick="setUnit(this)">crates</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Target price -->
+        <div class="form-group">
+          <label class="form-label">Target price per unit</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-sm" style="color:#059669">₵</span>
+            <input type="number" class="form-input" placeholder="0.00" style="padding-left:28px">
+          </div>
+          <p class="text-xs mt-1" style="color:#94a3b8">Optional — leave blank to receive all offers and negotiate. Current market: Tomatoes ₵18.34/kg</p>
+        </div>
+
+        <!-- Region + Date -->
+        <div class="grid grid-cols-2 gap-4 form-group">
+          <div>
+            <label class="form-label">Your region <span>*</span></label>
+            <select class="form-select">
+              <option value="">Select region...</option>
+              <option>Greater Accra</option>
+              <option>Ashanti</option>
+              <option>Eastern</option>
+              <option>Central</option>
+              <option>Western</option>
+              <option>Brong-Ahafo</option>
+              <option>Northern</option>
+              <option>Upper East</option>
+              <option>Upper West</option>
+              <option>Volta</option>
+              <option>Oti</option>
+              <option>Bono East</option>
+              <option>Ahafo</option>
+              <option>Western North</option>
+              <option>North East</option>
+              <option>Savannah</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Needed by <span>*</span></label>
+            <input type="date" class="form-input" min="2026-04-10">
+          </div>
+        </div>
+
+        <!-- Frequency -->
+        <div class="form-group">
+          <label class="form-label">How often do you need this?</label>
+          <div class="flex gap-2">
+            <button class="freq-btn active" onclick="setFreq(this)">One-time</button>
+            <button class="freq-btn" onclick="setFreq(this)">Weekly</button>
+            <button class="freq-btn" onclick="setFreq(this)">Bi-weekly</button>
+            <button class="freq-btn" onclick="setFreq(this)">Monthly</button>
+          </div>
+          <p class="text-xs mt-1" style="color:#94a3b8" id="freqNote">Single purchase — farmers will send a one-time offer</p>
+        </div>
+
+        <!-- Delivery preference -->
+        <div class="form-group">
+          <label class="form-label">Delivery preference</label>
+          <div class="flex gap-3">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="delivery" checked style="accent-color:#059669">
+              <span class="text-sm font-medium">I will pick up from farm</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="delivery" style="accent-color:#059669">
+              <span class="text-sm font-medium">Deliver to me (extra cost)</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="delivery" style="accent-color:#059669">
+              <span class="text-sm font-medium">Either is fine</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group">
+          <label class="form-label">Additional requirements <span style="color:#94a3b8;font-weight:400">(optional)</span></label>
+          <textarea class="form-textarea" rows="3" placeholder="e.g. Must be organic · Minimum 2 days fresh · Specific size or grade · Packaging requirements..."></textarea>
+        </div>
+
+        <!-- Contact method -->
+        <div class="form-group">
+          <label class="form-label">How should farmers contact you? <span>*</span></label>
+          <div class="flex gap-3">
+            <button class="contact-btn active" onclick="setContact(this)">
+              <svg class="w-5 h-5" style="color:#059669" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              In-App Message
+            </button>
+            <button class="contact-btn" onclick="setContact(this)">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              WhatsApp
+            </button>
+            <button class="contact-btn" onclick="setContact(this)">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.948V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+              Phone Call
+            </button>
+          </div>
+        </div>
+
+        <!-- Escrow note -->
+        <div class="rounded-xl p-3 mb-5 flex items-start gap-3" style="background:#f5f3ff;border:1px solid #ddd6fe">
+          <svg class="w-5 h-5 mt-0.5 flex-shrink-0" style="color:#7c3aed" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <div>
+            <p class="font-semibold text-xs" style="color:#6d28d9">Escrow Protected Transactions</p>
+            <p class="text-xs mt-0.5" style="color:#7c3aed">When you accept an offer, payment is held securely in escrow via MoMo until you confirm delivery. Your money is always protected.</p>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button onclick="submitRequest()" class="w-full py-4 rounded-xl font-bold text-white text-base" style="background:linear-gradient(135deg,#059669,#047857);box-shadow:0 4px 12px rgba(5,150,105,0.3)">
+          Post Request — Notify Matching Farmers
+        </button>
+        <p class="text-xs text-center mt-2" style="color:#94a3b8">Visible to verified farmers in your selected region only · Free to post</p>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="flex flex-col gap-4">
+
+      <!-- How it works -->
+      <div class="bg-white rounded-2xl p-5" style="border:1.5px solid #e2e8f0">
+        <h3 class="font-bold mb-4" style="color:#0f172a">How It Works</h3>
+        <div class="space-y-4">
+          <div class="flex items-start gap-3">
+            <div class="step-num">1</div>
+            <div>
+              <p class="font-semibold text-sm">Post your request</p>
+              <p class="text-xs mt-1" style="color:#64748b">Describe what you need — crop, quantity, price and date. Takes 2 minutes.</p>
+            </div>
+          </div>
+          <div class="flex items-center" style="padding-left:15px">
+            <div class="w-0.5 h-5" style="background:#e2e8f0;margin-left:0"></div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="step-num">2</div>
+            <div>
+              <p class="font-semibold text-sm">Farmers are notified</p>
+              <p class="text-xs mt-1" style="color:#64748b">All verified farmers growing that crop in your region get an instant SMS + app alert.</p>
+            </div>
+          </div>
+          <div class="flex items-center" style="padding-left:15px">
+            <div class="w-0.5 h-5" style="background:#e2e8f0"></div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="step-num">3</div>
+            <div>
+              <p class="font-semibold text-sm">Review offers</p>
+              <p class="text-xs mt-1" style="color:#64748b">Farmers respond with price quotes. Compare them side-by-side — ratings, distance, price.</p>
+            </div>
+          </div>
+          <div class="flex items-center" style="padding-left:15px">
+            <div class="w-0.5 h-5" style="background:#e2e8f0"></div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="step-num">4</div>
+            <div>
+              <p class="font-semibold text-sm">Accept &amp; pay securely</p>
+              <p class="text-xs mt-1" style="color:#64748b">Pick the best offer. Pay via MoMo with escrow protection until delivery confirmed.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="bg-white rounded-2xl p-5" style="border:1.5px solid #e2e8f0">
+        <h3 class="font-bold text-sm mb-3" style="color:#0f172a">This Week</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="text-center p-3 rounded-xl" style="background:#f0fdf4">
+            <p class="font-bold text-xl" style="color:#059669">47</p>
+            <p class="text-xs" style="color:#64748b">Requests posted</p>
+          </div>
+          <div class="text-center p-3 rounded-xl" style="background:#dbeafe">
+            <p class="font-bold text-xl" style="color:#1d4ed8">138</p>
+            <p class="text-xs" style="color:#64748b">Farmer offers sent</p>
+          </div>
+          <div class="text-center p-3 rounded-xl" style="background:#fef3c7">
+            <p class="font-bold text-xl" style="color:#92400e">2.9</p>
+            <p class="text-xs" style="color:#64748b">Avg offers/request</p>
+          </div>
+          <div class="text-center p-3 rounded-xl" style="background:#d1fae5">
+            <p class="font-bold text-xl" style="color:#065f46">94%</p>
+            <p class="text-xs" style="color:#64748b">Fulfillment rate</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tip box -->
+      <div class="rounded-2xl p-4" style="background:linear-gradient(135deg,#065f46,#059669);color:white">
+        <p class="font-bold text-sm mb-2">💡 Pro Tip</p>
+        <p class="text-xs" style="color:rgba(255,255,255,0.85);line-height:1.6">Requests with a target price get <strong>3x more responses</strong> from farmers. Use the Price Intelligence dashboard to find a fair market rate before posting.</p>
+        <a href="AgriKonnect_Price_Intelligence.html" class="inline-flex items-center gap-1 mt-2 text-xs font-bold" style="color:#6ee7b7">Check live prices →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMMUNITY REQUESTS FEED -->
+  <div class="mt-8">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h2 class="font-bold" style="color:#0f172a;font-size:18px">Active Requests Near You</h2>
+        <p class="text-xs" style="color:#64748b">Greater Accra region · Updated just now</p>
+      </div>
+      <div class="flex gap-2">
+        <button class="px-3 py-1.5 rounded-lg text-xs font-semibold" style="background:#059669;color:white">All</button>
+        <button class="px-3 py-1.5 rounded-lg text-xs font-medium" style="background:white;color:#64748b;border:1px solid #e2e8f0">With Offers</button>
+        <button class="px-3 py-1.5 rounded-lg text-xs font-medium" style="background:white;color:#64748b;border:1px solid #e2e8f0">No Offers Yet</button>
+      </div>
+    </div>
+    <div class="grid grid-cols-3 gap-4">
+
+      <div class="request-card fade-up">
+        <div class="flex items-start justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <img src="https://images.unsplash.com/photo-1494790108755-2616b612b9e0?w=40&h=40&fit=crop&crop=face" class="w-8 h-8 rounded-full">
+            <div>
+              <p class="font-semibold text-xs">Abena K.</p>
+              <p class="text-xs" style="color:#94a3b8">Verified Buyer</p>
+            </div>
+          </div>
+          <span class="status-matched">3 Offers</span>
+        </div>
+        <h4 class="font-bold" style="color:#0f172a">Cassava — 50 kg</h4>
+        <p class="text-xs mt-1" style="color:#64748b">Target: ₵3.50/kg · Greater Accra · By Apr 20</p>
+        <div class="flex items-center gap-2 mt-3">
+          <div class="flex -space-x-1">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face" class="offer-avatar">
+            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face" class="offer-avatar">
+            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" class="offer-avatar">
+          </div>
+          <span class="text-xs" style="color:#64748b">3 farmers responded</span>
+        </div>
+        <div class="flex items-center justify-between mt-3 pt-3" style="border-top:1px solid #f1f5f9">
+          <span class="text-xs" style="color:#94a3b8">2 hours ago</span>
+          <span class="text-xs font-semibold" style="color:#059669">Escrow ready</span>
+        </div>
+      </div>
+
+      <div class="request-card fade-up delay-1">
+        <div class="flex items-start justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs" style="background:#dbeafe;color:#1e40af">KA</div>
+            <div>
+              <p class="font-semibold text-xs">Kwame A.</p>
+              <p class="text-xs" style="color:#94a3b8">Restaurant owner</p>
+            </div>
+          </div>
+          <span class="status-open">Open</span>
+        </div>
+        <h4 class="font-bold" style="color:#0f172a">Tomatoes — 20 kg weekly</h4>
+        <p class="text-xs mt-1" style="color:#64748b">Target: ₵16.00/kg · Accra · Recurring weekly</p>
+        <div class="flex items-center gap-2 mt-3">
+          <div class="flex items-center gap-1 px-2 py-1 rounded-lg" style="background:#fef3c7">
+            <svg class="w-3 h-3" style="color:#d97706" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span class="text-xs font-medium" style="color:#92400e">No offers yet</span>
+          </div>
+          <span class="text-xs" style="color:#94a3b8">Be first to respond</span>
+        </div>
+        <div class="flex items-center justify-between mt-3 pt-3" style="border-top:1px solid #f1f5f9">
+          <span class="text-xs" style="color:#94a3b8">45 min ago</span>
+          <span class="text-xs font-semibold" style="color:#f59e0b">High demand</span>
+        </div>
+      </div>
+
+      <div class="request-card fade-up delay-2">
+        <div class="flex items-start justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs" style="background:#f0fdf4;color:#065f46">RS</div>
+            <div>
+              <p class="font-semibold text-xs">Resto Supply Co</p>
+              <p class="text-xs" style="color:#94a3b8">Food distributor</p>
+            </div>
+          </div>
+          <span class="status-matched">1 Offer</span>
+        </div>
+        <h4 class="font-bold" style="color:#0f172a">Plantain — 30 bunches</h4>
+        <p class="text-xs mt-1" style="color:#64748b">Target: ₵12/bunch · Accra · By Apr 25</p>
+        <div class="flex items-center gap-2 mt-3">
+          <div class="flex -space-x-1">
+            <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face" class="offer-avatar">
+          </div>
+          <span class="text-xs" style="color:#64748b">Ama Adusei offered ₵11.50</span>
+        </div>
+        <div class="flex items-center justify-between mt-3 pt-3" style="border-top:1px solid #f1f5f9">
+          <span class="text-xs" style="color:#94a3b8">3 hours ago</span>
+          <span class="text-xs font-semibold" style="color:#059669">Negotiating</span>
+        </div>
+      </div>
+
+      <div class="request-card fade-up delay-3">
+        <div class="flex items-start justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=40&h=40&fit=crop&crop=face" class="w-8 h-8 rounded-full">
+            <div>
+              <p class="font-semibold text-xs">Emmanuel O.</p>
+              <p class="text-xs" style="color:#94a3b8">Verified Buyer</p>
+            </div>
+          </div>
+          <span class="status-fulfilled">Fulfilled</span>
+        </div>
+        <h4 class="font-bold" style="color:#0f172a">Onion — 15 kg</h4>
+        <p class="text-xs mt-1" style="color:#64748b">Got ₵20.50/kg · Eastern → Accra · Apr 8</p>
+        <div class="flex items-center gap-2 mt-2 px-2 py-1.5 rounded-lg" style="background:#f0fdf4">
+          <svg class="w-3.5 h-3.5" style="color:#059669" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <p class="text-xs" style="color:#065f46">Saved ₵18 vs buying at market</p>
+        </div>
+        <div class="flex items-center justify-between mt-3 pt-3" style="border-top:1px solid #f1f5f9">
+          <span class="text-xs" style="color:#94a3b8">2 days ago</span>
+          <div class="flex">
+            <span style="color:#fbbf24;font-size:12px">★★★★★</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="request-card fade-up">
+        <div class="flex items-start justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs" style="background:#ede9fe;color:#6d28d9">FK</div>
+            <div>
+              <p class="font-semibold text-xs">Freda K.</p>
+              <p class="text-xs" style="color:#94a3b8">Catering business</p>
+            </div>
+          </div>
+          <span class="status-open">Open</span>
+        </div>
+        <h4 class="font-bold" style="color:#0f172a">Ginger — 5 kg</h4>
+        <p class="text-xs mt-1" style="color:#64748b">No target price · Accra · By Apr 18</p>
+        <div class="flex items-center gap-2 mt-3">
+          <div class="flex items-center gap-1 px-2 py-1 rounded-lg" style="background:#fef3c7">
+            <span class="text-xs font-medium" style="color:#92400e">No offers yet</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-between mt-3 pt-3" style="border-top:1px solid #f1f5f9">
+          <span class="text-xs" style="color:#94a3b8">1 hour ago</span>
+          <span class="text-xs" style="color:#94a3b8">Market: ₵202/kg</span>
+        </div>
+      </div>
+
+      <div class="request-card fade-up delay-1">
+        <div class="flex items-start justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs" style="background:#fee2e2;color:#991b1b">MB</div>
+            <div>
+              <p class="font-semibold text-xs">Mary B.</p>
+              <p class="text-xs" style="color:#94a3b8">School canteen</p>
+            </div>
+          </div>
+          <span class="status-matched">5 Offers</span>
+        </div>
+        <h4 class="font-bold" style="color:#0f172a">Maize — 200 kg monthly</h4>
+        <p class="text-xs mt-1" style="color:#64748b">Target: ₵8.00/kg · Accra · Recurring monthly</p>
+        <div class="flex items-center gap-2 mt-3">
+          <div class="flex -space-x-1">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face" class="offer-avatar">
+            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face" class="offer-avatar">
+            <div class="offer-avatar flex items-center justify-center text-xs font-bold" style="background:#d1fae5;color:#065f46">+3</div>
+          </div>
+          <span class="text-xs" style="color:#64748b">Best: ₵7.80/kg from Kofi</span>
+        </div>
+        <div class="flex items-center justify-between mt-3 pt-3" style="border-top:1px solid #f1f5f9">
+          <span class="text-xs" style="color:#94a3b8">6 hours ago</span>
+          <span class="text-xs font-semibold" style="color:#059669">High activity</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div class="success-overlay" id="successOverlay">
+  <div class="bg-white rounded-2xl p-8 text-center bounce-in" style="width:420px;max-width:90vw">
+    <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style="background:#d1fae5">
+      <svg class="w-8 h-8" style="color:#059669" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <h3 class="font-bold text-xl mb-2" style="color:#0f172a">Request Posted!</h3>
+    <p class="text-sm mb-1" style="color:#64748b">Your request has been sent to <strong style="color:#059669">23 verified farmers</strong> in Greater Accra.</p>
+    <p class="text-sm mb-4" style="color:#64748b">You'll receive an SMS and app notification when farmers respond.</p>
+    <div class="p-3 rounded-xl mb-5 text-left" style="background:#f0fdf4;border:1px solid #6ee7b7">
+      <p class="text-xs font-bold mb-1" style="color:#065f46">Your Request Summary</p>
+      <p class="text-xs" style="color:#065f46">Tomatoes · 50 kg · Target ₵16.00/kg · Greater Accra · By Apr 20</p>
+    </div>
+    <div class="flex gap-3">
+      <a href="AgriKonnect_Buyer_Dashboard.html" class="flex-1 py-2.5 rounded-xl font-semibold text-sm" style="background:#f0fdf4;color:#059669;border:1px solid #6ee7b7">View My Requests</a>
+      <button onclick="document.getElementById('successOverlay').style.display='none'" class="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white" style="background:#059669">Post Another</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function selectCrop(name, el) {
+  document.querySelectorAll('.crop-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('cropInput').value = name;
+}
+function clearChips() {
+  document.querySelectorAll('.crop-chip').forEach(c=>c.classList.remove('selected'));
+}
+function setUnit(el) {
+  document.querySelectorAll('.unit-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+function setFreq(el) {
+  document.querySelectorAll('.freq-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  const notes = {One-time:'Single purchase — farmers will send a one-time offer',Weekly:'Recurring weekly — farmers can offer a standing supply contract',Bi-weekly:'Every two weeks — farmers will quote for fortnightly supply','Monthly':'Once a month — great for bulk purchases'};
+  document.getElementById('freqNote').textContent = notes[el.textContent] || '';
+}
+function setContact(el) {
+  document.querySelectorAll('.contact-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+function submitRequest() {
+  const crop = document.getElementById('cropInput').value;
+  if(!crop){alert('Please select or enter a crop name');return;}
+  document.getElementById('successOverlay').style.display='flex';
+}
+</script>
+
+<!-- DEMO NAVIGATION -->
+<div id="demoNav" style="position:fixed;bottom:20px;right:20px;z-index:9999;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <button onclick="document.getElementById('demoMenu').style.display=document.getElementById('demoMenu').style.display==='none'?'block':'none'" 
+    style="width:52px;height:52px;border-radius:50%;background:#00413b;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,65,59,0.4);display:flex;align-items:center;justify-content:center">
+    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <div id="demoMenu" style="display:none;position:absolute;bottom:60px;right:0;background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);border:1.5px solid #e2e8f0;min-width:220px;overflow:hidden">
+    <div style="background:#00413b;padding:10px 14px">
+      <p style="color:#34d399;font-size:10px;font-weight:700;letter-spacing:.05em;margin:0">AGRIKONNECT DEMO</p>
+      <p style="color:rgba(255,255,255,0.7);font-size:11px;margin:2px 0 0">Jump to any page</p>
+    </div>
+    <div style="padding:6px">
+      <a href="index.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🏠 Homepage</a>
+      <a href="AgriKonnect_Auth.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🔐 Login / Register</a>
+      <a href="AgriKonnect_Browse_Page.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🛒 Browse Produce</a>
+      <a href="AgriKonnect_Product_Detail.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🍅 Product Detail</a>
+      <a href="AgriKonnect_Cart_Checkout.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">💳 Cart + Checkout</a>
+      <div style="height:1px;background:#f1f5f9;margin:4px 6px"></div>
+      <a href="AgriKonnect_Farmer_Dashboard.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🌾 Farmer Dashboard</a>
+      <a href="AgriKonnect_Buyer_Dashboard.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📦 Buyer Dashboard</a>
+      <div style="height:1px;background:#f1f5f9;margin:4px 6px"></div>
+      <a href="AgriKonnect_Price_Intelligence.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📊 Price Intelligence</a>
+      <a href="AgriKonnect_Post_Request.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📋 Post a Request</a>
+    </div>
+  </div>
+</div>
+<!-- END DEMO NAVIGATION -->
+</body>
+</html>

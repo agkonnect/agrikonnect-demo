@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Price Intelligence — AgriKonnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f1f5f9;color:#1e293b}
+.topbar{background:#00413b;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
+.live-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(52,211,153,0.15);border:1px solid #34d399;color:#34d399;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#34d399;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.stat-card{background:white;border-radius:16px;padding:18px;border:1.5px solid #e2e8f0;transition:all .2s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,0.07)}
+.cat-tab{padding:8px 18px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;border:1.5px solid #e2e8f0;background:white;color:#64748b}
+.cat-tab.active{background:#059669;color:white;border-color:#059669}
+.cat-tab:hover:not(.active){background:#f0fdf4;border-color:#6ee7b7;color:#059669}
+.price-table{width:100%;border-collapse:collapse}
+.price-table th{text-align:left;padding:10px 12px;font-size:12px;font-weight:700;color:#64748b;border-bottom:2px solid #f1f5f9;text-transform:uppercase;letter-spacing:.04em}
+.price-table td{padding:12px;border-bottom:1px solid #f8fafc;font-size:13px;vertical-align:middle}
+.price-table tr:hover td{background:#f8fafc}
+.price-table tr:last-child td{border-bottom:none}
+.badge-hot{background:#fef3c7;color:#92400e;border:1px solid #fcd34d;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px}
+.badge-fair{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px}
+.badge-high{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px}
+.up{color:#059669;font-weight:700}
+.down{color:#ef4444;font-weight:700}
+.flat{color:#94a3b8;font-weight:600}
+.sparkline{display:flex;align-items:flex-end;gap:1px;height:24px}
+.spark-bar{width:4px;border-radius:2px 2px 0 0;flex-shrink:0}
+.chart-bar-wrap{display:flex;align-items:flex-end;height:120px;flex:1}
+.cbar{width:100%;border-radius:6px 6px 0 0;cursor:pointer;position:relative;min-width:8px}
+.cbar:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#0f172a;color:white;padding:3px 8px;border-radius:6px;font-size:11px;white-space:nowrap;z-index:10}
+.region-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9}
+.region-row:last-child{border-bottom:none}
+.region-bar{height:6px;border-radius:999px;background:#059669;transition:width .5s}
+.watchlist-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9}
+.watchlist-item:last-child{border-bottom:none}
+.alert-toggle{width:40px;height:20px;border-radius:999px;cursor:pointer;transition:background .2s;position:relative;flex-shrink:0}
+.alert-toggle.on{background:#059669}.alert-toggle.off{background:#cbd5e1}
+.alert-dot{position:absolute;top:3px;width:14px;height:14px;border-radius:50%;background:white;transition:left .2s;box-shadow:0 1px 2px rgba(0,0,0,0.2)}
+.alert-toggle.on .alert-dot{left:23px}.alert-toggle.off .alert-dot{left:3px}
+.insight-box{background:linear-gradient(135deg,#065f46,#059669);border-radius:14px;padding:14px;color:white}
+.search-input{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:8px 12px 8px 36px;font-size:13px;color:#475569;outline:none;width:240px}
+.search-input:focus{border-color:#6ee7b7}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .3s ease forwards}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<div class="topbar">
+  <div class="flex items-center gap-3">
+    <a href="AgriKonnect_Homepage_Preview.html" class="flex items-center gap-2">
+      <div class="w-7 h-7 bg-emerald-500 rounded-lg flex items-center justify-center">
+        <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945"/></svg>
+      </div>
+      <span class="font-bold text-white">AgriKonnect</span>
+    </a>
+    <span style="color:rgba(255,255,255,0.3)">›</span>
+    <span class="font-semibold" style="color:#6ee7b7;font-size:14px">Price Intelligence</span>
+  </div>
+  <div class="flex items-center gap-3">
+    <div class="live-badge"><span class="live-dot"></span> LIVE · MoFA SRID</div>
+    <span class="text-xs" style="color:rgba(255,255,255,0.5)">Updated Apr 10, 2026</span>
+    <a href="AgriKonnect_Buyer_Dashboard.html" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style="background:rgba(255,255,255,0.1)">Dashboard</a>
+  </div>
+</div>
+
+<!-- HERO HEADER -->
+<div style="background:linear-gradient(135deg,#00413b 0%,#065f46 60%,#059669 100%);padding:28px 24px 32px">
+  <div class="max-w-7xl mx-auto">
+    <div class="flex items-start justify-between mb-6">
+      <div>
+        <h1 class="font-bold text-white" style="font-size:26px">Ghana Commodity Price Intelligence</h1>
+        <p style="color:rgba(255,255,255,0.7);font-size:14px;margin-top:4px">Real-time wholesale &amp; retail prices from MoFA SRID across all 16 regions</p>
+      </div>
+      <div class="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl" style="background:rgba(255,255,255,0.1)">
+        <svg class="w-4 h-4" style="color:#6ee7b7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span class="text-xs" style="color:rgba(255,255,255,0.8)">Data sourced from MoFA SRID · All prices in GHS/kg</span>
+      </div>
+    </div>
+    <!-- Top 3 insight cards -->
+    <div class="grid grid-cols-3 gap-4">
+      <div class="insight-box fade-up">
+        <p class="text-xs font-bold mb-1" style="color:rgba(255,255,255,0.6)">HIGHEST VALUE CROP</p>
+        <p class="font-bold text-lg">Ginger</p>
+        <p class="font-bold" style="font-size:24px">₵202.57<span class="text-sm font-normal" style="color:rgba(255,255,255,0.7)">/kg</span></p>
+        <p class="text-xs mt-1" style="color:rgba(255,255,255,0.6)">Central Region · Premium export potential</p>
+      </div>
+      <div style="background:linear-gradient(135deg,#b45309,#d97706);border-radius:14px;padding:14px;color:white" class="fade-up">
+        <p class="text-xs font-bold mb-1" style="color:rgba(255,255,255,0.6)">BIGGEST MOVER TODAY</p>
+        <p class="font-bold text-lg">Tomato Local</p>
+        <p class="font-bold" style="font-size:24px">₵18.34<span class="text-sm font-normal" style="color:rgba(255,255,255,0.7)">/kg</span></p>
+        <p class="text-xs mt-1" style="color:rgba(255,255,255,0.6)">+8.2% vs last week · High demand</p>
+      </div>
+      <div style="background:linear-gradient(135deg,#1e40af,#2563eb);border-radius:14px;padding:14px;color:white" class="fade-up">
+        <p class="text-xs font-bold mb-1" style="color:rgba(255,255,255,0.6)">BEST VALUE TODAY</p>
+        <p class="font-bold text-lg">Watermelon</p>
+        <p class="font-bold" style="font-size:24px">₵4.08<span class="text-sm font-normal" style="color:rgba(255,255,255,0.7)">/kg</span></p>
+        <p class="text-xs mt-1" style="color:rgba(255,255,255,0.6)">Lowest unit price · Bulk buy opportunity</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="max-w-7xl mx-auto px-6 py-6">
+  <div class="grid grid-cols-3 gap-6">
+
+    <!-- LEFT: Price Table -->
+    <div class="col-span-2">
+
+      <!-- Category tabs + Search -->
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex gap-2 flex-wrap">
+          <button class="cat-tab active" onclick="filterCat('all',this)">All Crops</button>
+          <button class="cat-tab" onclick="filterCat('cereal',this)">Cereals</button>
+          <button class="cat-tab" onclick="filterCat('roots',this)">Roots &amp; Tubers</button>
+          <button class="cat-tab" onclick="filterCat('veg',this)">Vegetables</button>
+          <button class="cat-tab" onclick="filterCat('fruit',this)">Fruits</button>
+          <button class="cat-tab" onclick="filterCat('spice',this)">Spices</button>
+        </div>
+        <div class="relative">
+          <svg class="w-4 h-4 absolute" style="left:10px;top:50%;transform:translateY(-50%);color:#94a3b8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input class="search-input" placeholder="Search crop..." oninput="searchCrops(this.value)">
+        </div>
+      </div>
+
+      <!-- Price Table -->
+      <div class="bg-white rounded-2xl overflow-hidden" style="border:1.5px solid #e2e8f0">
+        <table class="price-table" id="priceTable">
+          <thead>
+            <tr style="background:#f8fafc">
+              <th>Commodity</th>
+              <th>Category</th>
+              <th>Price (GHS/kg)</th>
+              <th>7d Trend</th>
+              <th>Sparkline</th>
+              <th>Signal</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="priceTableBody">
+          </tbody>
+        </table>
+      </div>
+      <p class="text-xs mt-2" style="color:#94a3b8">Source: MoFA SRID Ghana · Central Region (Mankessim) · July 2025 · Retail prices</p>
+
+      <!-- 30-day Chart -->
+      <div class="bg-white rounded-2xl p-5 mt-4" style="border:1.5px solid #e2e8f0">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-bold" style="color:#0f172a">30-Day Price Trend</h3>
+            <p class="text-xs" style="color:#64748b" id="chartCropLabel">Tomato Local — Central Region</p>
+          </div>
+          <div class="flex gap-2">
+            <select id="trendCrop" onchange="updateChart()" class="px-3 py-1.5 rounded-lg text-xs" style="border:1.5px solid #e2e8f0;color:#475569">
+              <option value="tomato">Tomato Local</option>
+              <option value="cassava">Cassava</option>
+              <option value="yam">Yam White</option>
+              <option value="onion">Onion</option>
+              <option value="plantain">Plantain Apem</option>
+              <option value="pepper">Fresh Pepper Bonnet</option>
+              <option value="maize">White Maize</option>
+              <option value="ginger">Ginger</option>
+            </select>
+          </div>
+        </div>
+        <!-- Bar chart -->
+        <div class="flex items-end gap-1 mb-2" style="height:130px" id="trendChart"></div>
+        <div class="flex items-center gap-4 pt-2" style="border-top:1px solid #f1f5f9">
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full" style="background:#059669"></div>
+            <span class="text-xs" style="color:#64748b">Retail price</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full" style="background:#fcd34d"></div>
+            <span class="text-xs" style="color:#64748b">Seasonal average</span>
+          </div>
+          <div class="ml-auto">
+            <span class="text-xs" style="color:#94a3b8">Simulated trend · Live API coming in Sprint 2</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Sidebar -->
+    <div class="flex flex-col gap-4">
+
+      <!-- Regional Comparison -->
+      <div class="bg-white rounded-2xl p-5" style="border:1.5px solid #e2e8f0">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-sm" style="color:#0f172a">Regional Comparison</h3>
+          <select class="px-2 py-1 rounded-lg text-xs" style="border:1px solid #e2e8f0;color:#475569">
+            <option>Tomato Local</option>
+            <option>Cassava</option>
+            <option>Yam White</option>
+          </select>
+        </div>
+        <div id="regionBars">
+          <div class="region-row"><div class="flex-1"><div class="flex justify-between text-xs mb-1"><span class="font-medium">Central (Mankessim)</span><span class="font-bold" style="color:#059669">₵18.34</span></div><div class="h-1.5 rounded-full" style="background:#e2e8f0"><div class="region-bar" style="width:100%"></div></div></div></div>
+          <div class="region-row"><div class="flex-1"><div class="flex justify-between text-xs mb-1"><span class="font-medium">Ashanti (Kumasi)</span><span class="font-bold" style="color:#059669">₵16.80</span></div><div class="h-1.5 rounded-full" style="background:#e2e8f0"><div class="region-bar" style="width:91%"></div></div></div></div>
+          <div class="region-row"><div class="flex-1"><div class="flex justify-between text-xs mb-1"><span class="font-medium">Greater Accra</span><span class="font-bold" style="color:#059669">₵20.10</span></div><div class="h-1.5 rounded-full" style="background:#e2e8f0"><div class="region-bar" style="width:109%;background:#f59e0b"></div></div></div></div>
+          <div class="region-row"><div class="flex-1"><div class="flex justify-between text-xs mb-1"><span class="font-medium">Eastern (Koforidua)</span><span class="font-bold" style="color:#059669">₵15.50</span></div><div class="h-1.5 rounded-full" style="background:#e2e8f0"><div class="region-bar" style="width:84%"></div></div></div></div>
+          <div class="region-row"><div class="flex-1"><div class="flex justify-between text-xs mb-1"><span class="font-medium">Western (Takoradi)</span><span class="font-bold" style="color:#059669">₵17.20</span></div><div class="h-1.5 rounded-full" style="background:#e2e8f0"><div class="region-bar" style="width:93%"></div></div></div></div>
+          <div class="region-row"><div class="flex-1"><div class="flex justify-between text-xs mb-1"><span class="font-medium">Brong-Ahafo</span><span class="font-bold" style="color:#059669">₵14.90</span></div><div class="h-1.5 rounded-full" style="background:#e2e8f0"><div class="region-bar" style="width:81%"></div></div></div></div>
+        </div>
+        <p class="text-xs mt-3 p-2 rounded-lg" style="background:#fef3c7;color:#92400e">💡 Buy in Eastern, sell in Greater Accra — ₵4.60/kg arbitrage opportunity</p>
+      </div>
+
+      <!-- Price Alerts Setup -->
+      <div class="bg-white rounded-2xl p-5" style="border:1.5px solid #e2e8f0">
+        <h3 class="font-bold text-sm mb-3" style="color:#0f172a">Set Price Alerts</h3>
+        <div class="space-y-2 mb-3">
+          <input type="text" placeholder="Crop name" class="w-full px-3 py-2 rounded-xl text-xs outline-none" style="border:1.5px solid #e2e8f0">
+          <div class="grid grid-cols-2 gap-2">
+            <input type="text" placeholder="Alert below ₵" class="px-3 py-2 rounded-xl text-xs outline-none" style="border:1.5px solid #e2e8f0">
+            <input type="text" placeholder="Alert above ₵" class="px-3 py-2 rounded-xl text-xs outline-none" style="border:1.5px solid #e2e8f0">
+          </div>
+          <div class="flex gap-2">
+            <button class="flex-1 py-2 rounded-xl text-xs font-semibold" style="background:#f0fdf4;color:#059669;border:1px solid #6ee7b7">SMS Alert</button>
+            <button class="flex-1 py-2 rounded-xl text-xs font-semibold" style="background:#ede9fe;color:#7c3aed;border:1px solid #d8b4fe">Push Alert</button>
+          </div>
+        </div>
+        <button class="w-full py-2 rounded-xl text-xs font-bold text-white" style="background:#059669">Save Alert</button>
+      </div>
+
+      <!-- My Watchlist -->
+      <div class="bg-white rounded-2xl p-5" style="border:1.5px solid #e2e8f0">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-sm" style="color:#0f172a">My Watchlist</h3>
+          <button class="text-xs font-semibold" style="color:#059669">+ Add crop</button>
+        </div>
+        <div>
+          <div class="watchlist-item">
+            <div>
+              <p class="font-semibold text-sm">Tomato Local</p>
+              <p class="text-xs up">₵18.34 ▲8.2%</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs" style="color:#94a3b8">Alert on</span>
+              <div class="alert-toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"><div class="alert-dot"></div></div>
+            </div>
+          </div>
+          <div class="watchlist-item">
+            <div>
+              <p class="font-semibold text-sm">Onion</p>
+              <p class="text-xs down">₵21.67 ▼2.4%</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs" style="color:#94a3b8">Alert on</span>
+              <div class="alert-toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"><div class="alert-dot"></div></div>
+            </div>
+          </div>
+          <div class="watchlist-item">
+            <div>
+              <p class="font-semibold text-sm">Cassava</p>
+              <p class="text-xs flat">₵5.03 ─ 0.0%</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs" style="color:#94a3b8">Alert off</span>
+              <div class="alert-toggle off" onclick="this.classList.toggle('on');this.classList.toggle('off')"><div class="alert-dot"></div></div>
+            </div>
+          </div>
+          <div class="watchlist-item">
+            <div>
+              <p class="font-semibold text-sm">Plantain Apem</p>
+              <p class="text-xs up">₵29.41 ▲5.1%</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs" style="color:#94a3b8">Alert on</span>
+              <div class="alert-toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"><div class="alert-dot"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Market Insight -->
+      <div class="rounded-2xl p-4" style="background:linear-gradient(135deg,#1e3a5f,#1e40af);color:white">
+        <div class="flex items-center gap-2 mb-2">
+          <svg class="w-4 h-4" style="color:#93c5fd" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          <span class="font-bold text-sm">Market Insight</span>
+        </div>
+        <p class="text-xs" style="color:rgba(255,255,255,0.8);line-height:1.6">Ginger at <strong>₵202.57/kg</strong> represents a significant export opportunity. Ghana exports to EU markets at ₵350–500/kg equivalent. Connecting ginger farmers to processors could unlock <strong>2–3x value</strong>.</p>
+        <a href="#" class="inline-flex items-center gap-1 mt-2 text-xs font-semibold" style="color:#93c5fd">Explore export opportunities →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const crops = [
+  {name:'Tomato Local',cat:'veg',price:18.34,change:8.2,dir:'up',signal:'hot',spark:[14,15,16,16,17,18,18]},
+  {name:'White Maize',cat:'cereal',price:8.66,change:1.2,dir:'up',signal:'fair',spark:[8,8,8,9,9,9,9]},
+  {name:'Maize Yellow',cat:'cereal',price:9.49,change:-0.5,dir:'down',signal:'fair',spark:[10,10,9,9,10,9,9]},
+  {name:'Millet',cat:'cereal',price:19.86,change:3.1,dir:'up',signal:'fair',spark:[18,18,19,19,20,20,20]},
+  {name:'Rice Local perfumed',cat:'cereal',price:20.64,change:-1.2,dir:'down',signal:'fair',spark:[22,21,21,21,20,21,21]},
+  {name:'Yam White',cat:'roots',price:17.08,change:2.4,dir:'up',signal:'fair',spark:[15,16,16,17,17,17,17]},
+  {name:'Cocoyam',cat:'roots',price:30.95,change:4.8,dir:'up',signal:'high',spark:[27,28,29,30,30,31,31]},
+  {name:'Cassava',cat:'roots',price:5.03,change:0.0,dir:'flat',signal:'fair',spark:[5,5,5,5,5,5,5]},
+  {name:'Gari',cat:'roots',price:15.12,change:1.5,dir:'up',signal:'fair',spark:[14,14,15,15,15,15,15]},
+  {name:'Plantain Apentu',cat:'roots',price:24.41,change:3.2,dir:'up',signal:'fair',spark:[22,22,23,24,24,24,24]},
+  {name:'Plantain Apem',cat:'roots',price:29.41,change:5.1,dir:'up',signal:'hot',spark:[26,27,27,28,29,29,29]},
+  {name:'Garden Egg',cat:'veg',price:19.13,change:-1.8,dir:'down',signal:'fair',spark:[21,20,20,19,19,19,19]},
+  {name:'Okro Fresh',cat:'veg',price:20.94,change:2.6,dir:'up',signal:'fair',spark:[19,19,20,21,21,21,21]},
+  {name:'Onion',cat:'veg',price:21.67,change:-2.4,dir:'down',signal:'fair',spark:[23,23,22,22,22,21,22]},
+  {name:'Fresh Pepper Bonnet',cat:'spice',price:32.13,change:6.2,dir:'up',signal:'high',spark:[28,28,30,31,31,32,32]},
+  {name:'Dried Pepper Legon 18',cat:'spice',price:99.37,change:1.1,dir:'up',signal:'high',spark:[96,97,98,98,99,99,99]},
+  {name:'Ginger',cat:'spice',price:202.57,change:4.5,dir:'up',signal:'high',spark:[188,190,194,196,199,202,203]},
+  {name:'Palm Fruit',cat:'roots',price:8.91,change:0.8,dir:'up',signal:'fair',spark:[8,8,9,9,9,9,9]},
+  {name:'Watermelon',cat:'fruit',price:4.08,change:-3.2,dir:'down',signal:'hot',spark:[5,5,5,4,4,4,4]},
+  {name:'Pineapple',cat:'fruit',price:7.63,change:1.4,dir:'up',signal:'fair',spark:[7,7,7,8,8,8,8]},
+  {name:'Orange',cat:'fruit',price:9.15,change:-0.8,dir:'down',signal:'fair',spark:[9,9,9,9,9,9,9]},
+  {name:'Banana Local',cat:'fruit',price:17.52,change:2.0,dir:'up',signal:'fair',spark:[16,16,17,17,17,18,18]},
+  {name:'Mango Exotic',cat:'fruit',price:10.67,change:3.5,dir:'up',signal:'fair',spark:[9,10,10,10,11,11,11]},
+];
+
+let currentFilter = 'all';
+
+function sparkHTML(data, dir) {
+  const max = Math.max(...data);
+  const color = dir==='up'?'#059669':dir==='down'?'#ef4444':'#94a3b8';
+  return '<div class="sparkline">' + data.map(v=>`<div class="spark-bar" style="height:${Math.round((v/max)*22)+2}px;background:${color}"></div>`).join('') + '</div>';
+}
+
+function renderTable(filter='all', search='') {
+  const tbody = document.getElementById('priceTableBody');
+  let rows = crops.filter(c => {
+    const matchCat = filter==='all' || c.cat===filter;
+    const matchSearch = c.name.toLowerCase().includes(search.toLowerCase());
+    return matchCat && matchSearch;
+  });
+  tbody.innerHTML = rows.map(c => {
+    const dirIcon = c.dir==='up'?'▲':c.dir==='down'?'▼':'─';
+    const dirClass = c.dir==='up'?'up':c.dir==='down'?'down':'flat';
+    const badge = c.signal==='hot'?'<span class="badge-hot">🔥 Hot Deal</span>':c.signal==='high'?'<span class="badge-high">⚠ High</span>':'<span class="badge-fair">✓ Fair</span>';
+    const catLabel = {cereal:'Cereal',roots:'Root/Tuber',veg:'Vegetable',fruit:'Fruit',spice:'Spice'}[c.cat];
+    return `<tr>
+      <td><strong>${c.name}</strong></td>
+      <td><span class="text-xs px-2 py-0.5 rounded-full" style="background:#f1f5f9;color:#64748b">${catLabel}</span></td>
+      <td><strong style="font-size:14px">₵${c.price.toFixed(2)}</strong></td>
+      <td class="${dirClass}">${dirIcon} ${Math.abs(c.change)}%</td>
+      <td>${sparkHTML(c.spark, c.dir)}</td>
+      <td>${badge}</td>
+      <td><button class="text-xs font-semibold" style="color:#059669" onclick="setAlert('${c.name}')">Alert</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterCat(cat, el) {
+  currentFilter = cat;
+  document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderTable(cat, document.querySelector('.search-input').value);
+}
+
+function searchCrops(val) {
+  renderTable(currentFilter, val);
+}
+
+function setAlert(name) {
+  document.querySelector('.search-input + .search-input, input[placeholder="Crop name"]') && null;
+  document.querySelector('input[placeholder="Crop name"]').value = name;
+}
+
+// Trend chart data
+const trendData = {
+  tomato: {label:'Tomato Local — Central Region',data:[14.2,14.8,15.1,15.4,16.0,15.8,16.2,16.5,16.8,17.0,17.2,16.9,17.4,17.8,17.6,18.0,18.1,17.9,18.2,18.0,18.1,18.3,18.2,18.4,18.3,18.3,18.4,18.3,18.34,18.34],color:'#059669'},
+  cassava: {label:'Cassava — Central Region',data:[4.8,4.8,4.9,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,5.03,5.03],color:'#6ee7b7'},
+  yam: {label:'Yam White — Central Region',data:[14,14.2,14.5,14.8,15,15.2,15.4,15.6,15.8,16,16,16.2,16.4,16.5,16.5,16.6,16.7,16.7,16.8,16.9,16.9,17.0,17.0,17.0,17.0,17.1,17.1,17.1,17.08,17.08],color:'#fcd34d'},
+  onion: {label:'Onion — Central Region',data:[24,23.8,23.5,23.2,23,22.8,22.6,22.4,22.2,22.0,22.0,21.8,21.8,21.8,21.7,21.7,21.8,21.7,21.7,21.7,21.7,21.7,21.7,21.7,21.7,21.7,21.7,21.7,21.67,21.67],color:'#f87171'},
+  plantain: {label:'Plantain Apem — Central Region',data:[24,24.5,25,25.4,25.8,26,26.2,26.5,26.8,27,27.2,27.4,27.6,27.8,28,28.2,28.4,28.6,28.8,29,29,29.1,29.2,29.2,29.3,29.3,29.4,29.4,29.41,29.41],color:'#a78bfa'},
+  pepper: {label:'Fresh Pepper Bonnet — Central Region',data:[26,26.5,27,27.5,28,28,28.5,28.8,29,29.2,29.5,29.8,30,30.2,30.4,30.5,30.8,31,31,31.2,31.4,31.5,31.6,31.8,31.9,32,32,32.1,32.13,32.13],color:'#fb923c'},
+  maize: {label:'White Maize — Central Region',data:[7.8,7.9,8.0,8.0,8.1,8.2,8.3,8.4,8.4,8.5,8.5,8.5,8.5,8.6,8.6,8.6,8.6,8.6,8.6,8.6,8.6,8.6,8.7,8.7,8.7,8.7,8.7,8.66,8.66,8.66],color:'#fbbf24'},
+  ginger: {label:'Ginger — Central Region',data:[180,182,184,185,187,188,190,191,192,193,194,195,196,196,197,198,199,199,200,200,201,201,202,202,202,202,202,202,202.57,202.57],color:'#c084fc'},
+};
+
+function updateChart() {
+  const key = document.getElementById('trendCrop').value;
+  const d = trendData[key];
+  document.getElementById('chartCropLabel').textContent = d.label;
+  const max = Math.max(...d.data);
+  const min = Math.min(...d.data);
+  const range = max - min || 1;
+  const labels = Array.from({length:30},(_,i)=>{
+    const dt = new Date('2026-03-11');
+    dt.setDate(dt.getDate()+i);
+    return dt.toLocaleDateString('en-GB',{month:'short',day:'numeric'});
+  });
+  const chart = document.getElementById('trendChart');
+  chart.innerHTML = d.data.map((v,i)=>{
+    const h = Math.round(((v-min)/range)*100)+20;
+    const tip = `${labels[i]}: ₵${v.toFixed(2)}`;
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+      <div style="flex:1;display:flex;align-items:flex-end;width:100%">
+        <div class="cbar" style="height:${h}px;background:${d.color};opacity:${i===d.data.length-1?1:0.7}" data-tip="${tip}"></div>
+      </div>
+      ${i%5===0?`<span style="font-size:9px;color:#94a3b8;white-space:nowrap">${labels[i]}</span>`:'<span style="font-size:9px">&nbsp;</span>'}
+    </div>`;
+  }).join('');
+}
+
+renderTable();
+updateChart();
+</script>
+
+<!-- DEMO NAVIGATION -->
+<div id="demoNav" style="position:fixed;bottom:20px;right:20px;z-index:9999;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <button onclick="document.getElementById('demoMenu').style.display=document.getElementById('demoMenu').style.display==='none'?'block':'none'" 
+    style="width:52px;height:52px;border-radius:50%;background:#00413b;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,65,59,0.4);display:flex;align-items:center;justify-content:center">
+    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <div id="demoMenu" style="display:none;position:absolute;bottom:60px;right:0;background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);border:1.5px solid #e2e8f0;min-width:220px;overflow:hidden">
+    <div style="background:#00413b;padding:10px 14px">
+      <p style="color:#34d399;font-size:10px;font-weight:700;letter-spacing:.05em;margin:0">AGRIKONNECT DEMO</p>
+      <p style="color:rgba(255,255,255,0.7);font-size:11px;margin:2px 0 0">Jump to any page</p>
+    </div>
+    <div style="padding:6px">
+      <a href="index.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🏠 Homepage</a>
+      <a href="AgriKonnect_Auth.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🔐 Login / Register</a>
+      <a href="AgriKonnect_Browse_Page.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🛒 Browse Produce</a>
+      <a href="AgriKonnect_Product_Detail.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🍅 Product Detail</a>
+      <a href="AgriKonnect_Cart_Checkout.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">💳 Cart + Checkout</a>
+      <div style="height:1px;background:#f1f5f9;margin:4px 6px"></div>
+      <a href="AgriKonnect_Farmer_Dashboard.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🌾 Farmer Dashboard</a>
+      <a href="AgriKonnect_Buyer_Dashboard.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📦 Buyer Dashboard</a>
+      <div style="height:1px;background:#f1f5f9;margin:4px 6px"></div>
+      <a href="AgriKonnect_Price_Intelligence.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📊 Price Intelligence</a>
+      <a href="AgriKonnect_Post_Request.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📋 Post a Request</a>
+    </div>
+  </div>
+</div>
+<!-- END DEMO NAVIGATION -->
+</body>
+</html>

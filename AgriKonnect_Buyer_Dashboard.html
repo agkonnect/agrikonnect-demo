@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buyer Dashboard — AgriKonnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f1f5f9;color:#1e293b;display:flex;min-height:100vh}
+.sidebar{width:240px;min-height:100vh;background:#00413b;position:fixed;top:0;left:0;z-index:40;display:flex;flex-direction:column;transition:transform .3s}
+.sidebar-logo{padding:20px 16px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:10px;margin:2px 8px;cursor:pointer;transition:all .2s;color:rgba(255,255,255,0.65);font-size:14px;font-weight:500;text-decoration:none}
+.nav-item:hover{background:rgba(255,255,255,0.08);color:white}
+.nav-item.active{background:rgba(52,211,153,0.18);color:#34d399}
+.nav-item .icon{width:18px;height:18px;flex-shrink:0}
+.nav-section{padding:8px 16px;font-size:11px;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,0.3);margin-top:12px;margin-bottom:4px;text-transform:uppercase}
+.nav-badge{margin-left:auto;background:rgba(239,68,68,0.2);color:#f87171;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px}
+.nav-badge-green{margin-left:auto;background:rgba(52,211,153,0.2);color:#34d399;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px}
+.main{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:white;border-bottom:1px solid #e2e8f0;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:30}
+.stat-card{background:white;border-radius:16px;padding:20px;border:1.5px solid #e2e8f0;transition:all .2s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,0.07)}
+.stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.status-pending{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+.status-confirmed{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
+.status-transit{background:#f3e8ff;color:#6b21a8;border:1px solid #d8b4fe}
+.status-delivered{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7}
+.status-cancelled{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.status{font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px}
+.order-card{background:white;border:1.5px solid #e2e8f0;border-radius:16px;padding:16px;transition:all .2s}
+.order-card:hover{border-color:#6ee7b7;box-shadow:0 4px 12px rgba(0,0,0,0.06)}
+.saved-card{background:white;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;transition:all .2s;position:relative}
+.saved-card:hover{border-color:#6ee7b7;transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.07)}
+.remove-btn{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:#ef4444;border:1px solid #fecaca}
+.request-card{background:white;border:1.5px solid #e2e8f0;border-radius:14px;padding:14px;transition:all .2s}
+.request-card:hover{border-color:#6ee7b7}
+.request-open{border-left:3px solid #059669}
+.request-matched{border-left:3px solid #2563eb}
+.request-closed{border-left:3px solid #94a3b8}
+.price-alert-up{background:#f0fdf4;border:1px solid #6ee7b7;border-radius:10px;padding:10px 12px}
+.price-alert-down{background:#fff1f2;border:1px solid #fecaca;border-radius:10px;padding:10px 12px}
+.msg-item{display:flex;gap:10px;align-items:start;padding:10px 0;border-bottom:1px solid #f1f5f9;cursor:pointer}
+.msg-item:last-child{border-bottom:none}
+.msg-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:#ef4444;position:absolute;top:2px;right:2px}
+.mobile-menu-btn{display:none}
+@media(max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.mobile-menu-btn{display:flex}.stat-grid{grid-template-columns:repeat(2,1fr)!important}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .35s ease forwards}
+.delay-1{animation-delay:.05s}.delay-2{animation-delay:.1s}.delay-3{animation-delay:.15s}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo flex items-center gap-2">
+    <div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center flex-shrink-0">
+      <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945"/></svg>
+    </div>
+    <span class="font-bold text-white text-base">AgriKonnect</span>
+  </div>
+
+  <!-- Buyer profile mini -->
+  <div class="flex items-center gap-3 px-4 py-3" style="border-bottom:1px solid rgba(255,255,255,0.08)">
+    <img src="https://images.unsplash.com/photo-1494790108755-2616b612b9e0?w=80&h=80&fit=crop&crop=face" class="w-10 h-10 rounded-full object-cover" style="border:2px solid #34d399">
+    <div class="flex-1 min-w-0">
+      <p class="font-semibold text-sm text-white truncate">Abena Kyei</p>
+      <p class="text-xs truncate" style="color:#6ee7b7">Verified Buyer</p>
+    </div>
+    <div class="w-2 h-2 rounded-full flex-shrink-0" style="background:#34d399"></div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 py-2 overflow-y-auto">
+    <div class="nav-section">Main</div>
+    <a class="nav-item active" href="#">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" href="AgriKonnect_Browse_Page.html">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+      Browse Produce
+    </a>
+    <a class="nav-item" href="#">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      My Orders
+      <span class="nav-badge">2</span>
+    </a>
+    <a class="nav-item" href="#">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+      Saved Items
+      <span class="nav-badge-green">6</span>
+    </a>
+
+    <div class="nav-section">MVP Features</div>
+    <a class="nav-item" href="#" style="background:rgba(52,211,153,0.08)">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+      My Requests
+      <span class="nav-badge">3</span>
+    </a>
+    <a class="nav-item" href="#">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      Price Intel
+    </a>
+
+    <div class="nav-section">Account</div>
+    <a class="nav-item" href="#">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      Messages
+      <span class="nav-badge">4</span>
+    </a>
+    <a class="nav-item" href="#">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+      Wallet
+    </a>
+    <a class="nav-item" href="#">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Settings
+    </a>
+  </nav>
+
+  <div style="padding:12px 8px;border-top:1px solid rgba(255,255,255,0.08)">
+    <a class="nav-item" href="AgriKonnect_Homepage_Preview.html" style="color:rgba(255,255,255,0.4)">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      Logout
+    </a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="flex items-center gap-3">
+      <button class="mobile-menu-btn w-9 h-9 rounded-lg border flex items-center justify-center" style="border-color:#e2e8f0;color:#475569" onclick="document.getElementById('sidebar').classList.toggle('open')">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div>
+        <h1 class="font-bold" style="color:#0f172a;font-size:18px">Good morning, Abena! 👋</h1>
+        <p class="text-xs" style="color:#64748b">Thursday, April 10, 2026</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <!-- Search -->
+      <div class="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl" style="background:#f8fafc;border:1.5px solid #e2e8f0;width:240px">
+        <svg class="w-4 h-4" style="color:#94a3b8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input class="flex-1 bg-transparent text-sm outline-none" placeholder="Search produce..." style="color:#475569">
+      </div>
+      <!-- Post request btn -->
+      <button class="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold" style="background:#f0fdf4;color:#059669;border:1.5px solid #6ee7b7" onclick="document.getElementById('requestModal').style.display='flex'">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Post a Request
+      </button>
+      <!-- Cart -->
+      <a href="AgriKonnect_Cart_Checkout.html" class="relative w-9 h-9 rounded-lg border flex items-center justify-center" style="border-color:#e2e8f0;color:#475569">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        <span class="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white flex items-center justify-center" style="background:#059669;font-size:10px;font-weight:700">3</span>
+      </a>
+      <!-- Notifications -->
+      <button class="relative w-9 h-9 rounded-lg border flex items-center justify-center" style="border-color:#e2e8f0;color:#475569">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <span class="notif-dot"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="flex-1 p-6">
+
+    <!-- STAT CARDS -->
+    <div class="stat-grid grid grid-cols-4 gap-4 mb-6">
+      <div class="stat-card fade-up">
+        <div class="flex items-start justify-between mb-3">
+          <div class="stat-icon" style="background:#d1fae5">
+            <svg class="w-5 h-5" style="color:#059669" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          </div>
+          <span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background:#d1fae5;color:#065f46">+3 this month</span>
+        </div>
+        <p class="font-bold" style="font-size:26px;color:#0f172a">24</p>
+        <p class="text-sm" style="color:#64748b">Total Orders</p>
+        <p class="text-xs mt-1" style="color:#94a3b8">Since joining</p>
+      </div>
+
+      <div class="stat-card fade-up delay-1">
+        <div class="flex items-start justify-between mb-3">
+          <div class="stat-icon" style="background:#fef3c7">
+            <svg class="w-5 h-5" style="color:#d97706" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background:#fef3c7;color:#92400e">In progress</span>
+        </div>
+        <p class="font-bold" style="font-size:26px;color:#0f172a">2</p>
+        <p class="text-sm" style="color:#64748b">Active Orders</p>
+        <p class="text-xs mt-1" style="color:#94a3b8">Escrow protected</p>
+      </div>
+
+      <div class="stat-card fade-up delay-2">
+        <div class="flex items-start justify-between mb-3">
+          <div class="stat-icon" style="background:#fee2e2">
+            <svg class="w-5 h-5" style="color:#ef4444" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+          </div>
+          <a href="#" class="text-xs font-semibold" style="color:#ef4444">View all</a>
+        </div>
+        <p class="font-bold" style="font-size:26px;color:#0f172a">6</p>
+        <p class="text-sm" style="color:#64748b">Saved Items</p>
+        <p class="text-xs mt-1" style="color:#94a3b8">2 with price drops</p>
+      </div>
+
+      <div class="stat-card fade-up delay-3">
+        <div class="flex items-start justify-between mb-3">
+          <div class="stat-icon" style="background:#ede9fe">
+            <svg class="w-5 h-5" style="color:#7c3aed" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+          </div>
+          <button class="text-xs font-semibold" style="color:#7c3aed">Top Up</button>
+        </div>
+        <p class="font-bold" style="font-size:26px;color:#0f172a">₵320</p>
+        <p class="text-sm" style="color:#64748b">Wallet Balance</p>
+        <p class="text-xs mt-1" style="color:#94a3b8">MoMo linked</p>
+      </div>
+    </div>
+
+    <!-- ROW 2: Active Orders + My Requests -->
+    <div class="grid grid-cols-2 gap-4 mb-6">
+
+      <!-- Active Orders -->
+      <div class="bg-white rounded-2xl p-5" style="border:1.5px solid #e2e8f0">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold" style="color:#0f172a">Active Orders</h3>
+          <a href="#" class="text-xs font-medium" style="color:#059669">View all orders →</a>
+        </div>
+
+        <!-- Order 1 -->
+        <div class="order-card mb-3">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-semibold text-sm" style="color:#059669">#AK-847</span>
+                <span class="status status-confirmed">Confirmed</span>
+              </div>
+              <p class="text-xs mt-0.5" style="color:#64748b">Kofi Mensah · Mensah Family Farm</p>
+            </div>
+            <p class="font-bold" style="color:#0f172a">₵14.40</p>
+          </div>
+          <div class="flex items-center gap-2 mb-3">
+            <img src="https://images.unsplash.com/photo-1546793665-c74683f339c1?w=60&h=60&fit=crop" class="w-10 h-10 rounded-lg object-cover">
+            <div>
+              <p class="text-sm font-medium">Roma Tomatoes × 2 kg</p>
+              <p class="text-xs" style="color:#64748b">Farm pickup · Est. Apr 11</p>
+            </div>
+          </div>
+          <!-- Progress bar -->
+          <div class="relative">
+            <div class="flex justify-between text-xs mb-1" style="color:#94a3b8">
+              <span>Ordered</span><span>Confirmed</span><span>Ready</span><span>Picked up</span>
+            </div>
+            <div class="h-1.5 rounded-full" style="background:#e2e8f0">
+              <div class="h-1.5 rounded-full" style="background:#059669;width:50%"></div>
+            </div>
+          </div>
+          <div class="flex gap-2 mt-3">
+            <button class="flex-1 py-1.5 rounded-lg text-xs font-semibold" style="background:#f0fdf4;color:#059669;border:1px solid #6ee7b7">Message Farmer</button>
+            <button class="flex-1 py-1.5 rounded-lg text-xs font-semibold" style="background:#f8fafc;color:#475569;border:1px solid #e2e8f0">Track Order</button>
+          </div>
+        </div>
+
+        <!-- Order 2 -->
+        <div class="order-card">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-semibold text-sm" style="color:#059669">#AK-841</span>
+                <span class="status status-transit">In Transit</span>
+              </div>
+              <p class="text-xs mt-0.5" style="color:#64748b">Ama Adusei · Adusei Fresh Farm</p>
+            </div>
+            <p class="font-bold" style="color:#0f172a">₵110.00</p>
+          </div>
+          <div class="flex items-center gap-2 mb-3">
+            <img src="https://images.unsplash.com/photo-1518977676405-c12a9dd6e8a0?w=60&h=60&fit=crop" class="w-10 h-10 rounded-lg object-cover">
+            <div>
+              <p class="text-sm font-medium">Red Yam × 20 kg</p>
+              <p class="text-xs" style="color:#64748b">Home delivery · Est. today by 5pm</p>
+            </div>
+          </div>
+          <div class="relative">
+            <div class="flex justify-between text-xs mb-1" style="color:#94a3b8">
+              <span>Ordered</span><span>Confirmed</span><span>In Transit</span><span>Delivered</span>
+            </div>
+            <div class="h-1.5 rounded-full" style="background:#e2e8f0">
+              <div class="h-1.5 rounded-full" style="background:#7c3aed;width:75%"></div>
+            </div>
+          </div>
+          <div class="flex gap-2 mt-3">
+            <button class="flex-1 py-1.5 rounded-lg text-xs font-semibold" style="background:#f8fafc;color:#475569;border:1px solid #e2e8f0">Message Farmer</button>
+            <button class="flex-1 py-1.5 rounded-lg text-xs font-semibold" style="background:#f3e8ff;color:#7c3aed;border:1px solid #d8b4fe">Live Track</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- My Requests (MVP Feature) -->
+      <div class="bg-white rounded-2xl p-5" style="border:1.5px solid #e2e8f0">
+        <div class="flex items-center justify-between mb-1">
+          <div>
+            <h3 class="font-bold" style="color:#0f172a">My Requests</h3>
+            <p class="text-xs" style="color:#64748b">Farmers come to you</p>
+          </div>
+          <button class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold" style="background:#059669;color:white" onclick="document.getElementById('requestModal').style.display='flex'">
+            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            New Request
+          </button>
+        </div>
+
+        <div class="space-y-3 mt-4">
+          <!-- Request 1 - matched -->
+          <div class="request-card request-matched">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="flex items-center gap-2">
+                  <p class="font-semibold text-sm">Cassava — 50 kg</p>
+                  <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:#dbeafe;color:#1e40af">3 Offers</span>
+                </div>
+                <p class="text-xs mt-0.5" style="color:#64748b">Target: ₵3.50/kg · Greater Accra · By Apr 20</p>
+              </div>
+              <button class="text-xs font-semibold" style="color:#2563eb">View Offers</button>
+            </div>
+            <div class="flex gap-1 mt-2">
+              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=24&h=24&fit=crop&crop=face" class="w-6 h-6 rounded-full" style="border:2px solid white">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=24&h=24&fit=crop&crop=face" class="w-6 h-6 rounded-full -ml-1" style="border:2px solid white">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=24&h=24&fit=crop&crop=face" class="w-6 h-6 rounded-full -ml-1" style="border:2px solid white">
+              <span class="text-xs ml-1" style="color:#64748b">Kofi, Ama and Kwabena responded</span>
+            </div>
+          </div>
+
+          <!-- Request 2 - open -->
+          <div class="request-card request-open">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="flex items-center gap-2">
+                  <p class="font-semibold text-sm">Plantain — 30 bunches</p>
+                  <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:#d1fae5;color:#065f46">Open</span>
+                </div>
+                <p class="text-xs mt-0.5" style="color:#64748b">Target: ₵12/bunch · Ashanti · By Apr 25</p>
+              </div>
+              <button class="text-xs" style="color:#94a3b8">Edit</button>
+            </div>
+            <p class="text-xs mt-1" style="color:#94a3b8">Posted 2 hours ago · No offers yet</p>
+          </div>
+
+          <!-- Request 3 - closed -->
+          <div class="request-card request-closed" style="opacity:0.6">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="flex items-center gap-2">
+                  <p class="font-semibold text-sm">Tomatoes — 10 kg</p>
+                  <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:#f1f5f9;color:#64748b">Fulfilled</span>
+                </div>
+                <p class="text-xs mt-0.5" style="color:#94a3b8">Ordered from Kofi Mensah · Apr 8</p>
+              </div>
+              <button class="text-xs font-semibold" style="color:#059669">Reorder</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 3: Saved Items + Alerts + Messages -->
+    <div class="grid grid-cols-3 gap-4 mb-6">
+
+      <!-- Saved Items -->
+      <div class="col-span-2 bg-white rounded-2xl p-5" style="border:1.5px solid #e2e8f0">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-bold" style="color:#0f172a">Saved Items</h3>
+            <p class="text-xs" style="color:#64748b">2 items dropped in price</p>
+          </div>
+          <a href="AgriKonnect_Browse_Page.html" class="text-xs font-medium" style="color:#059669">Browse more →</a>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <!-- Card 1 - price drop -->
+          <div class="saved-card">
+            <div class="remove-btn" onclick="this.parentElement.remove()">×</div>
+            <div style="height:90px;overflow:hidden;position:relative">
+              <img src="https://images.unsplash.com/photo-1546793665-c74683f339c1?w=200&h=180&fit=crop" class="w-full h-full object-cover">
+              <div class="absolute bottom-0 left-0 right-0 px-2 py-1" style="background:rgba(5,150,105,0.9)">
+                <p class="text-white text-xs font-bold">Price drop! ₵7.20 → ₵6.80</p>
+              </div>
+            </div>
+            <div class="p-2.5">
+              <p class="font-semibold text-xs">Roma Tomatoes</p>
+              <p class="font-bold text-sm" style="color:#059669">₵6.80/kg</p>
+              <p class="text-xs" style="color:#94a3b8">Kofi · Ashanti</p>
+              <button class="w-full mt-2 py-1 rounded-lg text-xs font-semibold" style="background:#059669;color:white">Add to Cart</button>
+            </div>
+          </div>
+          <!-- Card 2 -->
+          <div class="saved-card">
+            <div class="remove-btn" onclick="this.parentElement.remove()">×</div>
+            <div style="height:90px;overflow:hidden;position:relative">
+              <img src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=200&h=180&fit=crop" class="w-full h-full object-cover">
+              <div class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-xs font-bold" style="background:#fef3c7;color:#92400e">Ready in 7d</div>
+            </div>
+            <div class="p-2.5">
+              <p class="font-semibold text-xs">White Yam</p>
+              <p class="font-bold text-sm" style="color:#0f172a">₵12.00/kg</p>
+              <p class="text-xs" style="color:#94a3b8">Ama · Eastern</p>
+              <button class="w-full mt-2 py-1 rounded-lg text-xs font-semibold" style="background:#fef3c7;color:#92400e;border:1px solid #fcd34d">Pre-Order</button>
+            </div>
+          </div>
+          <!-- Card 3 - price drop -->
+          <div class="saved-card">
+            <div class="remove-btn" onclick="this.parentElement.remove()">×</div>
+            <div style="height:90px;overflow:hidden">
+              <img src="https://images.unsplash.com/photo-1518977676405-c12a9dd6e8a0?w=200&h=180&fit=crop" class="w-full h-full object-cover">
+            </div>
+            <div class="p-2.5">
+              <p class="font-semibold text-xs">Red Onions</p>
+              <p class="font-bold text-sm" style="color:#059669">₵5.20/kg</p>
+              <p class="text-xs" style="color:#94a3b8">Kwame · Brong-Ahafo</p>
+              <button class="w-full mt-2 py-1 rounded-lg text-xs font-semibold" style="background:#059669;color:white">Add to Cart</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Price Alerts + Messages -->
+      <div class="flex flex-col gap-4">
+        <!-- Price Alerts -->
+        <div class="bg-white rounded-2xl p-4" style="border:1.5px solid #e2e8f0">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-sm" style="color:#0f172a">Price Alerts</h3>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:rgba(52,211,153,0.15);color:#059669">LIVE</span>
+          </div>
+          <div class="space-y-2">
+            <div class="price-alert-up">
+              <div class="flex justify-between">
+                <p class="font-semibold text-xs">Tomatoes</p>
+                <p class="font-bold text-xs" style="color:#059669">↑ ₵8.50</p>
+              </div>
+              <p class="text-xs" style="color:#64748b">Up 2.1% — good time to sell!</p>
+            </div>
+            <div class="price-alert-down">
+              <div class="flex justify-between">
+                <p class="font-semibold text-xs">Scotch Bonnet</p>
+                <p class="font-bold text-xs" style="color:#ef4444">↓ ₵18.00</p>
+              </div>
+              <p class="text-xs" style="color:#64748b">Down 4.2% — buy now!</p>
+            </div>
+          </div>
+          <a href="#" class="flex items-center justify-center gap-1 mt-3 text-xs font-medium" style="color:#059669">Full price dashboard →</a>
+        </div>
+
+        <!-- Messages -->
+        <div class="bg-white rounded-2xl p-4 flex-1" style="border:1.5px solid #e2e8f0">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-sm" style="color:#0f172a">Messages</h3>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:#fee2e2;color:#991b1b">4 unread</span>
+          </div>
+          <div>
+            <div class="msg-item">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face" class="msg-avatar">
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between">
+                  <p class="font-semibold text-xs">Kofi Mensah</p>
+                  <span class="text-xs" style="color:#94a3b8">5m</span>
+                </div>
+                <p class="text-xs truncate" style="color:#64748b">Your order is ready for pickup!</p>
+                <span class="inline-block w-2 h-2 rounded-full" style="background:#059669"></span>
+              </div>
+            </div>
+            <div class="msg-item">
+              <div class="msg-avatar" style="background:#dbeafe;color:#1e40af">AA</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between">
+                  <p class="font-semibold text-xs">Ama Adusei</p>
+                  <span class="text-xs" style="color:#94a3b8">1h</span>
+                </div>
+                <p class="text-xs truncate" style="color:#64748b">On the way! ETA 5pm today</p>
+                <span class="inline-block w-2 h-2 rounded-full" style="background:#059669"></span>
+              </div>
+            </div>
+            <div class="msg-item">
+              <div class="msg-avatar" style="background:#fef3c7;color:#92400e">KB</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between">
+                  <p class="font-semibold text-xs">Kwabena Boateng</p>
+                  <span class="text-xs" style="color:#94a3b8">3h</span>
+                </div>
+                <p class="text-xs truncate" style="color:#64748b">I can supply 50kg cassava at ₵3.40</p>
+                <span class="inline-block w-2 h-2 rounded-full" style="background:#059669"></span>
+              </div>
+            </div>
+          </div>
+          <a href="#" class="flex items-center justify-center gap-1 mt-2 text-xs font-medium" style="color:#059669">View all →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 4: Order History Table -->
+    <div class="bg-white rounded-2xl p-5" style="border:1.5px solid #e2e8f0">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold" style="color:#0f172a">Order History</h3>
+        <div class="flex gap-2">
+          <select class="px-3 py-1.5 rounded-lg text-xs" style="border:1.5px solid #e2e8f0;color:#475569">
+            <option>All Orders</option><option>Delivered</option><option>Cancelled</option>
+          </select>
+          <button class="px-3 py-1.5 rounded-lg text-xs font-medium" style="background:#f0fdf4;color:#059669;border:1px solid #6ee7b7">Export CSV</button>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full" style="font-size:13px">
+          <thead>
+            <tr style="border-bottom:1px solid #f1f5f9">
+              <th class="text-left py-2 font-semibold" style="color:#64748b">Order</th>
+              <th class="text-left py-2 font-semibold" style="color:#64748b">Product</th>
+              <th class="text-left py-2 font-semibold" style="color:#64748b">Farmer</th>
+              <th class="text-left py-2 font-semibold" style="color:#64748b">Amount</th>
+              <th class="text-left py-2 font-semibold" style="color:#64748b">Date</th>
+              <th class="text-left py-2 font-semibold" style="color:#64748b">Status</th>
+              <th class="py-2"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #f8fafc">
+              <td class="py-2.5 font-medium" style="color:#059669">#AK-836</td>
+              <td class="py-2.5">Roma Tomatoes × 10kg</td>
+              <td class="py-2.5" style="color:#475569">Kofi Mensah</td>
+              <td class="py-2.5 font-semibold">₵72.00</td>
+              <td class="py-2.5" style="color:#64748b">Apr 8</td>
+              <td class="py-2.5"><span class="status status-delivered">Delivered</span></td>
+              <td class="py-2.5"><button class="text-xs font-semibold" style="color:#059669">Reorder</button></td>
+            </tr>
+            <tr style="border-bottom:1px solid #f8fafc">
+              <td class="py-2.5 font-medium" style="color:#059669">#AK-829</td>
+              <td class="py-2.5">Scotch Bonnet × 2kg</td>
+              <td class="py-2.5" style="color:#475569">Ama Adusei</td>
+              <td class="py-2.5 font-semibold">₵44.00</td>
+              <td class="py-2.5" style="color:#64748b">Apr 5</td>
+              <td class="py-2.5"><span class="status status-delivered">Delivered</span></td>
+              <td class="py-2.5"><button class="text-xs font-semibold" style="color:#059669">Reorder</button></td>
+            </tr>
+            <tr style="border-bottom:1px solid #f8fafc">
+              <td class="py-2.5 font-medium" style="color:#059669">#AK-814</td>
+              <td class="py-2.5">Plantain × 5 bunches</td>
+              <td class="py-2.5" style="color:#475569">Kwame Asante</td>
+              <td class="py-2.5 font-semibold">₵60.00</td>
+              <td class="py-2.5" style="color:#64748b">Apr 1</td>
+              <td class="py-2.5"><span class="status status-delivered">Delivered</span></td>
+              <td class="py-2.5"><button class="text-xs font-semibold" style="color:#059669">Reorder</button></td>
+            </tr>
+            <tr>
+              <td class="py-2.5 font-medium" style="color:#059669">#AK-801</td>
+              <td class="py-2.5">Red Onions × 5kg</td>
+              <td class="py-2.5" style="color:#475569">Kofi Mensah</td>
+              <td class="py-2.5 font-semibold">₵26.00</td>
+              <td class="py-2.5" style="color:#64748b">Mar 28</td>
+              <td class="py-2.5"><span class="status status-cancelled">Cancelled</span></td>
+              <td class="py-2.5"><button class="text-xs font-semibold" style="color:#059669">Reorder</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- POST A REQUEST MODAL -->
+<div id="requestModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center">
+  <div class="bg-white rounded-2xl p-6" style="width:480px;max-width:90vw">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h3 class="font-bold text-lg" style="color:#0f172a">Post a Request</h3>
+        <p class="text-xs" style="color:#64748b">Farmers matching your needs will reach out</p>
+      </div>
+      <button onclick="document.getElementById('requestModal').style.display='none'" class="w-8 h-8 rounded-full flex items-center justify-center" style="background:#f1f5f9;color:#64748b;font-size:18px">×</button>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="text-xs font-semibold block mb-1" style="color:#475569">What do you need?</label>
+        <input type="text" placeholder="e.g. Cassava, Tomatoes, Yam..." class="w-full px-3 py-2 rounded-xl text-sm outline-none" style="border:1.5px solid #e2e8f0">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs font-semibold block mb-1" style="color:#475569">Quantity</label>
+          <input type="text" placeholder="e.g. 50 kg" class="w-full px-3 py-2 rounded-xl text-sm outline-none" style="border:1.5px solid #e2e8f0">
+        </div>
+        <div>
+          <label class="text-xs font-semibold block mb-1" style="color:#475569">Target Price (per kg)</label>
+          <input type="text" placeholder="₵ 0.00" class="w-full px-3 py-2 rounded-xl text-sm outline-none" style="border:1.5px solid #e2e8f0">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs font-semibold block mb-1" style="color:#475569">Region</label>
+          <select class="w-full px-3 py-2 rounded-xl text-sm outline-none" style="border:1.5px solid #e2e8f0;color:#475569">
+            <option>Greater Accra</option><option>Ashanti</option><option>Eastern</option><option>Western</option><option>Any Region</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-semibold block mb-1" style="color:#475569">Needed By</label>
+          <input type="date" class="w-full px-3 py-2 rounded-xl text-sm outline-none" style="border:1.5px solid #e2e8f0;color:#475569">
+        </div>
+      </div>
+      <div>
+        <label class="text-xs font-semibold block mb-1" style="color:#475569">Additional Notes (optional)</label>
+        <textarea placeholder="Any specific requirements — organic, size, freshness..." class="w-full px-3 py-2 rounded-xl text-sm outline-none resize-none" style="border:1.5px solid #e2e8f0;height:70px"></textarea>
+      </div>
+      <button class="w-full py-3 rounded-xl font-bold text-white" style="background:#059669" onclick="document.getElementById('requestModal').style.display='none'">
+        Post Request — Farmers Will Contact You
+      </button>
+      <p class="text-xs text-center" style="color:#94a3b8">Visible to verified farmers in your selected region</p>
+    </div>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click',function(e){
+    if(this.href && !this.href.endsWith('#'))return;
+    e.preventDefault();
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+</script>
+
+<!-- DEMO NAVIGATION -->
+<div id="demoNav" style="position:fixed;bottom:20px;right:20px;z-index:9999;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <button onclick="document.getElementById('demoMenu').style.display=document.getElementById('demoMenu').style.display==='none'?'block':'none'" 
+    style="width:52px;height:52px;border-radius:50%;background:#00413b;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,65,59,0.4);display:flex;align-items:center;justify-content:center">
+    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <div id="demoMenu" style="display:none;position:absolute;bottom:60px;right:0;background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);border:1.5px solid #e2e8f0;min-width:220px;overflow:hidden">
+    <div style="background:#00413b;padding:10px 14px">
+      <p style="color:#34d399;font-size:10px;font-weight:700;letter-spacing:.05em;margin:0">AGRIKONNECT DEMO</p>
+      <p style="color:rgba(255,255,255,0.7);font-size:11px;margin:2px 0 0">Jump to any page</p>
+    </div>
+    <div style="padding:6px">
+      <a href="index.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🏠 Homepage</a>
+      <a href="AgriKonnect_Auth.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🔐 Login / Register</a>
+      <a href="AgriKonnect_Browse_Page.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🛒 Browse Produce</a>
+      <a href="AgriKonnect_Product_Detail.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🍅 Product Detail</a>
+      <a href="AgriKonnect_Cart_Checkout.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">💳 Cart + Checkout</a>
+      <div style="height:1px;background:#f1f5f9;margin:4px 6px"></div>
+      <a href="AgriKonnect_Farmer_Dashboard.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🌾 Farmer Dashboard</a>
+      <a href="AgriKonnect_Buyer_Dashboard.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📦 Buyer Dashboard</a>
+      <div style="height:1px;background:#f1f5f9;margin:4px 6px"></div>
+      <a href="AgriKonnect_Price_Intelligence.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📊 Price Intelligence</a>
+      <a href="AgriKonnect_Post_Request.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📋 Post a Request</a>
+    </div>
+  </div>
+</div>
+<!-- END DEMO NAVIGATION -->
+</body>
+</html>

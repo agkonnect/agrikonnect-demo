@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farmer Dashboard — AgriKonnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f1f5f9;color:#1e293b;display:flex;min-height:100vh}
+
+/* Sidebar */
+.sidebar{width:240px;min-height:100vh;background:#00413b;position:fixed;top:0;left:0;z-index:40;display:flex;flex-direction:column;transition:transform .3s}
+.sidebar-logo{padding:20px 16px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:10px;margin:2px 8px;cursor:pointer;transition:all .2s;color:rgba(255,255,255,0.65);font-size:14px;font-weight:500;text-decoration:none}
+.nav-item:hover{background:rgba(255,255,255,0.08);color:white}
+.nav-item.active{background:rgba(52,211,153,0.18);color:#34d399}
+.nav-item .icon{width:18px;height:18px;flex-shrink:0}
+.nav-section{padding:8px 16px;font-size:11px;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,0.3);margin-top:12px;margin-bottom:4px;text-transform:uppercase}
+.nav-badge{margin-left:auto;background:rgba(239,68,68,0.2);color:#f87171;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px}
+
+/* Main content */
+.main{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+/* Top bar */
+.topbar{background:white;border-bottom:1px solid #e2e8f0;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:30}
+
+/* Stat cards */
+.stat-card{background:white;border-radius:16px;padding:20px;border:1.5px solid #e2e8f0;transition:all .2s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,0.07)}
+.stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* Chart bars */
+.chart-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.chart-bar-wrap{display:flex;align-items:flex-end;height:100px;width:100%}
+.cbar{width:100%;border-radius:6px 6px 0 0;transition:height .5s;cursor:pointer;position:relative}
+.cbar:hover::after{content:attr(data-label);position:absolute;top:-28px;left:50%;transform:translateX(-50%);background:#0f172a;color:white;padding:3px 8px;border-radius:6px;font-size:11px;white-space:nowrap;z-index:10}
+.chart-label{font-size:11px;color:#94a3b8;white-space:nowrap}
+
+/* Order status badges */
+.status-pending{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+.status-confirmed{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
+.status-delivered{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7}
+.status-cancelled{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.status{font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px}
+
+/* Product listing card */
+.listing-card{background:white;border:1.5px solid #e2e8f0;border-radius:16px;overflow:hidden;transition:all .2s}
+.listing-card:hover{border-color:#6ee7b7;box-shadow:0 4px 12px rgba(0,0,0,0.06)}
+
+/* Farm Score card */
+.score-card{background:linear-gradient(135deg,#065f46 0%,#059669 60%,#34d399 100%);border-radius:16px;padding:20px;color:white;position:relative;overflow:hidden}
+.score-card::before{content:'';position:absolute;top:-30px;right:-30px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.06)}
+.score-gauge{width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;flex-direction:column;border:3px solid rgba(255,255,255,0.3);flex-shrink:0}
+
+/* Price ticker mini */
+.price-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9}
+.price-row:last-child{border-bottom:none}
+
+/* Message preview */
+.msg-item{display:flex;gap-3;align-items:start;padding:10px 0;border-bottom:1px solid #f1f5f9;cursor:pointer}
+.msg-item:last-child{border-bottom:none}
+.msg-item:hover{background:#f8fafc;margin:0 -16px;padding:10px 16px;border-radius:8px}
+.msg-avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0}
+
+/* Quick action btn */
+.qa-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap-6px;padding:16px;border-radius:14px;border:1.5px solid #e2e8f0;cursor:pointer;transition:all .2s;text-align:center;background:white}
+.qa-btn:hover{border-color:#059669;background:#f0fdf4;transform:translateY(-2px)}
+.qa-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 6px}
+
+/* Toggle switch */
+.toggle{width:44px;height:22px;border-radius:999px;cursor:pointer;transition:background .2s;position:relative;flex-shrink:0}
+.toggle.on{background:#059669}
+.toggle.off{background:#cbd5e1}
+.toggle-dot{position:absolute;top:3px;width:16px;height:16px;border-radius:50%;background:white;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.2)}
+.toggle.on .toggle-dot{left:25px}
+.toggle.off .toggle-dot{left:3px}
+
+/* Notification dot */
+.notif-dot{width:8px;height:8px;border-radius:50%;background:#ef4444;position:absolute;top:2px;right:2px}
+
+/* Mobile -->
+.mobile-menu-btn{display:none}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .mobile-menu-btn{display:flex}
+  .stat-grid{grid-template-columns:repeat(2,1fr)!important}
+}
+
+/* Fade in */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .35s ease forwards}
+.delay-1{animation-delay:.05s}
+.delay-2{animation-delay:.1s}
+.delay-3{animation-delay:.15s}
+.delay-4{animation-delay:.2s}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo flex items-center gap-2">
+    <div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center flex-shrink-0">
+      <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945"/></svg>
+    </div>
+    <span class="font-bold text-white text-base">AgriKonnect</span>
+  </div>
+
+  <!-- Farmer profile mini -->
+  <div class="flex items-center gap-3 px-4 py-3" style="border-bottom:1px solid rgba(255,255,255,0.08)">
+    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face" class="w-10 h-10 rounded-full object-cover" style="border:2px solid #34d399">
+    <div class="flex-1 min-w-0">
+      <p class="font-semibold text-sm text-white truncate">Kofi Mensah</p>
+      <p class="text-xs truncate" style="color:#6ee7b7">Mensah Family Farm</p>
+    </div>
+    <div class="w-2 h-2 rounded-full flex-shrink-0" style="background:#34d399" title="Online"></div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 py-2 overflow-y-auto">
+    <div class="nav-section">Main</div>
+    <a class="nav-item active" href="#">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" href="#">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      My Listings
+      <span class="nav-badge">12</span>
+    </a>
+    <a class="nav-item" href="#">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Orders
+      <span class="nav-badge">3</span>
+    </a>
+    <a class="nav-item" href="#">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      Messages
+      <span class="nav-badge">5</span>
+    </a>
+
+    <div class="nav-section">Finance</div>
+    <a class="nav-item" href="#">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+      Wallet
+    </a>
+    <a class="nav-item" href="#">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      Transactions
+    </a>
+
+    <div class="nav-section">Farm</div>
+    <a class="nav-item" href="#">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Farm Profile
+    </a>
+    <a class="nav-item" href="#">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Settings
+    </a>
+  </nav>
+
+  <!-- Logout -->
+  <div style="padding:12px 8px;border-top:1px solid rgba(255,255,255,0.08)">
+    <a class="nav-item" href="AgriKonnect_Homepage_Preview.html" style="color:rgba(255,255,255,0.4)">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      Logout
+    </a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="flex items-center gap-3">
+      <button class="mobile-menu-btn w-9 h-9 rounded-lg border flex items-center justify-center" style="border-color:#e2e8f0;color:#475569" onclick="document.getElementById('sidebar').classList.toggle('open')">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div>
+        <h1 class="font-bold" style="color:#0f172a;font-size:18px">Good morning, Kofi! 👋</h1>
+        <p class="text-xs" style="color:#64748b">Thursday, April 10, 2026</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <!-- Price alert -->
+      <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm" style="background:#f0fdf4;border:1px solid #6ee7b7;color:#065f46">
+        <svg class="w-3.5 h-3.5" style="color:#059669" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+        Tomatoes ₵8.50 +2.1%
+      </div>
+      <!-- Add listing btn -->
+      <button class="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white" style="background:#059669">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Add Listing
+      </button>
+      <!-- Notifications -->
+      <button class="relative w-9 h-9 rounded-lg border flex items-center justify-center" style="border-color:#e2e8f0;color:#475569">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <span class="notif-dot"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="flex-1 p-6">
+
+    <!-- STAT CARDS -->
+    <div class="stat-grid grid grid-cols-4 gap-4 mb-6">
+      <div class="stat-card fade-up">
+        <div class="flex items-start justify-between mb-3">
+          <div class="stat-icon" style="background:#d1fae5">
+            <svg class="w-5 h-5" style="color:#059669" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background:#d1fae5;color:#065f46">+18% this month</span>
+        </div>
+        <p class="font-bold" style="font-size:26px;color:#059669">₵2,847</p>
+        <p class="text-sm" style="color:#64748b">Total Revenue</p>
+        <p class="text-xs mt-1" style="color:#94a3b8">Last 30 days</p>
+      </div>
+
+      <div class="stat-card fade-up delay-1">
+        <div class="flex items-start justify-between mb-3">
+          <div class="stat-icon" style="background:#dbeafe">
+            <svg class="w-5 h-5" style="color:#2563eb" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          </div>
+          <span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background:#dbeafe;color:#1e40af">2 low stock</span>
+        </div>
+        <p class="font-bold" style="font-size:26px;color:#0f172a">12</p>
+        <p class="text-sm" style="color:#64748b">Active Listings</p>
+        <p class="text-xs mt-1" style="color:#94a3b8">Across 4 categories</p>
+      </div>
+
+      <div class="stat-card fade-up delay-2">
+        <div class="flex items-start justify-between mb-3">
+          <div class="stat-icon" style="background:#fef3c7">
+            <svg class="w-5 h-5" style="color:#d97706" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          </div>
+          <span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background:#fef3c7;color:#92400e">3 need action</span>
+        </div>
+        <p class="font-bold" style="font-size:26px;color:#0f172a">8</p>
+        <p class="text-sm" style="color:#64748b">Pending Orders</p>
+        <p class="text-xs mt-1" style="color:#94a3b8">3 awaiting confirmation</p>
+      </div>
+
+      <div class="stat-card fade-up delay-3">
+        <div class="flex items-start justify-between mb-3">
+          <div class="stat-icon" style="background:#ede9fe">
+            <svg class="w-5 h-5" style="color:#7c3aed" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+          </div>
+          <button class="text-xs font-semibold" style="color:#7c3aed">Withdraw</button>
+        </div>
+        <p class="font-bold" style="font-size:26px;color:#0f172a">₵1,240</p>
+        <p class="text-sm" style="color:#64748b">Wallet Balance</p>
+        <p class="text-xs mt-1" style="color:#94a3b8">Available to withdraw</p>
+      </div>
+    </div>
+
+    <!-- ROW 2: Chart + Orders -->
+    <div class="grid grid-cols-3 gap-4 mb-6">
+
+      <!-- Earnings Chart -->
+      <div class="col-span-2 bg-white rounded-2xl p-5" style="border:1.5px solid #e2e8f0">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-bold" style="color:#0f172a">Earnings Overview</h3>
+            <p class="text-xs" style="color:#64748b">Weekly revenue — April 2026</p>
+          </div>
+          <div class="flex gap-2">
+            <button class="px-3 py-1 rounded-lg text-xs font-medium" style="background:#059669;color:white">Weekly</button>
+            <button class="px-3 py-1 rounded-lg text-xs font-medium" style="background:#f1f5f9;color:#64748b">Monthly</button>
+          </div>
+        </div>
+        <!-- Bar chart -->
+        <div class="flex items-end gap-2 mb-1" style="height:120px">
+          <div class="chart-col">
+            <div class="chart-bar-wrap"><div class="cbar" style="height:55%;background:#d1fae5" data-label="Mon ₵320"></div></div>
+            <span class="chart-label">Mon</span>
+          </div>
+          <div class="chart-col">
+            <div class="chart-bar-wrap"><div class="cbar" style="height:72%;background:#6ee7b7" data-label="Tue ₵420"></div></div>
+            <span class="chart-label">Tue</span>
+          </div>
+          <div class="chart-col">
+            <div class="chart-bar-wrap"><div class="cbar" style="height:45%;background:#d1fae5" data-label="Wed ₵260"></div></div>
+            <span class="chart-label">Wed</span>
+          </div>
+          <div class="chart-col">
+            <div class="chart-bar-wrap"><div class="cbar" style="height:88%;background:#059669" data-label="Thu ₵510"></div></div>
+            <span class="chart-label">Thu</span>
+          </div>
+          <div class="chart-col">
+            <div class="chart-bar-wrap"><div class="cbar" style="height:95%;background:#047857" data-label="Fri ₵555"></div></div>
+            <span class="chart-label">Fri</span>
+          </div>
+          <div class="chart-col">
+            <div class="chart-bar-wrap"><div class="cbar" style="height:78%;background:#6ee7b7" data-label="Sat ₵455"></div></div>
+            <span class="chart-label">Sat</span>
+          </div>
+          <div class="chart-col">
+            <div class="chart-bar-wrap"><div class="cbar" style="height:40%;background:#d1fae5" data-label="Sun ₵230"></div></div>
+            <span class="chart-label">Sun</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-between pt-3" style="border-top:1px solid #f1f5f9">
+          <div>
+            <span class="font-bold text-lg" style="color:#059669">₵2,750</span>
+            <span class="text-xs ml-2" style="color:#64748b">this week</span>
+          </div>
+          <span class="text-xs px-2 py-0.5 rounded-full" style="background:#d1fae5;color:#065f46">↑ 23% vs last week</span>
+        </div>
+      </div>
+
+      <!-- Recent Messages -->
+      <div class="bg-white rounded-2xl p-5" style="border:1.5px solid #e2e8f0">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold" style="color:#0f172a">Messages</h3>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:#fee2e2;color:#991b1b">5 unread</span>
+        </div>
+        <div>
+          <div class="msg-item">
+            <img src="https://images.unsplash.com/photo-1494790108755-2616b612b9e0?w=80&h=80&fit=crop&crop=face" class="msg-avatar">
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between">
+                <p class="font-semibold text-xs">Abena Kyei</p>
+                <span class="text-xs" style="color:#94a3b8">2m</span>
+              </div>
+              <p class="text-xs truncate" style="color:#64748b">Can you do 5kg at ₵7.00?</p>
+              <span class="inline-block w-2 h-2 rounded-full" style="background:#059669"></span>
+            </div>
+          </div>
+          <div class="msg-item">
+            <div class="msg-avatar flex items-center justify-center font-bold text-sm" style="background:#dbeafe;color:#1e40af">KA</div>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between">
+                <p class="font-semibold text-xs">Kwame Asante</p>
+                <span class="text-xs" style="color:#94a3b8">1h</span>
+              </div>
+              <p class="text-xs truncate" style="color:#64748b">Order confirmed. Will pick up tomorrow</p>
+            </div>
+          </div>
+          <div class="msg-item">
+            <div class="msg-avatar flex items-center justify-center font-bold text-sm" style="background:#fef3c7;color:#92400e">RS</div>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between">
+                <p class="font-semibold text-xs">Resto Supply Co</p>
+                <span class="text-xs" style="color:#94a3b8">3h</span>
+              </div>
+              <p class="text-xs truncate" style="color:#64748b">Need 20kg weekly, can you handle?</p>
+              <span class="inline-block w-2 h-2 rounded-full" style="background:#059669"></span>
+            </div>
+          </div>
+          <div class="msg-item">
+            <div class="msg-avatar flex items-center justify-center font-bold text-sm" style="background:#f0fdf4;color:#065f46">EO</div>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between">
+                <p class="font-semibold text-xs">Efua Owusu</p>
+                <span class="text-xs" style="color:#94a3b8">5h</span>
+              </div>
+              <p class="text-xs truncate" style="color:#64748b">Thanks! Great tomatoes as always</p>
+            </div>
+          </div>
+        </div>
+        <a href="#" class="flex items-center justify-center gap-1 mt-3 text-xs font-medium" style="color:#059669">View all messages →</a>
+      </div>
+    </div>
+
+    <!-- ROW 3: Orders + Quick Actions + Farm Score -->
+    <div class="grid grid-cols-3 gap-4 mb-6">
+
+      <!-- Recent Orders -->
+      <div class="col-span-2 bg-white rounded-2xl p-5" style="border:1.5px solid #e2e8f0">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold" style="color:#0f172a">Recent Orders</h3>
+          <a href="#" class="text-xs font-medium" style="color:#059669">View all →</a>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full" style="font-size:13px">
+            <thead>
+              <tr style="border-bottom:1px solid #f1f5f9">
+                <th class="text-left py-2 font-semibold" style="color:#64748b">Order</th>
+                <th class="text-left py-2 font-semibold" style="color:#64748b">Buyer</th>
+                <th class="text-left py-2 font-semibold" style="color:#64748b">Product</th>
+                <th class="text-left py-2 font-semibold" style="color:#64748b">Amount</th>
+                <th class="text-left py-2 font-semibold" style="color:#64748b">Status</th>
+                <th class="py-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid #f8fafc">
+                <td class="py-2.5 font-medium" style="color:#059669">#AK-847</td>
+                <td class="py-2.5" style="color:#475569">Abena Kyei</td>
+                <td class="py-2.5">Roma Tomatoes × 2kg</td>
+                <td class="py-2.5 font-semibold">₵14.40</td>
+                <td class="py-2.5"><span class="status status-pending">Pending</span></td>
+                <td class="py-2.5"><button class="text-xs" style="color:#059669">Confirm</button></td>
+              </tr>
+              <tr style="border-bottom:1px solid #f8fafc">
+                <td class="py-2.5 font-medium" style="color:#059669">#AK-841</td>
+                <td class="py-2.5" style="color:#475569">Resto Supply Co</td>
+                <td class="py-2.5">Scotch Bonnet × 5kg</td>
+                <td class="py-2.5 font-semibold">₵110.00</td>
+                <td class="py-2.5"><span class="status status-confirmed">Confirmed</span></td>
+                <td class="py-2.5"><button class="text-xs" style="color:#64748b">Details</button></td>
+              </tr>
+              <tr style="border-bottom:1px solid #f8fafc">
+                <td class="py-2.5 font-medium" style="color:#059669">#AK-836</td>
+                <td class="py-2.5" style="color:#475569">Kwame Asante</td>
+                <td class="py-2.5">Roma Tomatoes × 10kg</td>
+                <td class="py-2.5 font-semibold">₵72.00</td>
+                <td class="py-2.5"><span class="status status-delivered">Delivered</span></td>
+                <td class="py-2.5"><button class="text-xs" style="color:#64748b">Details</button></td>
+              </tr>
+              <tr style="border-bottom:1px solid #f8fafc">
+                <td class="py-2.5 font-medium" style="color:#059669">#AK-829</td>
+                <td class="py-2.5" style="color:#475569">Market Lady GH</td>
+                <td class="py-2.5">Red Onions × 8kg</td>
+                <td class="py-2.5 font-semibold">₵41.60</td>
+                <td class="py-2.5"><span class="status status-delivered">Delivered</span></td>
+                <td class="py-2.5"><button class="text-xs" style="color:#64748b">Details</button></td>
+              </tr>
+              <tr>
+                <td class="py-2.5 font-medium" style="color:#059669">#AK-821</td>
+                <td class="py-2.5" style="color:#475569">Fresh Foods Ltd</td>
+                <td class="py-2.5">Scotch Bonnet × 2kg</td>
+                <td class="py-2.5 font-semibold">₵44.00</td>
+                <td class="py-2.5"><span class="status status-cancelled">Cancelled</span></td>
+                <td class="py-2.5"><button class="text-xs" style="color:#64748b">View</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Right column: Score + Quick Actions -->
+      <div class="flex flex-col gap-4">
+
+        <!-- Farm Score card -->
+        <div class="score-card">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="font-bold text-sm">Farm Score™</h3>
+              <p class="text-xs" style="color:rgba(255,255,255,0.7)">Your creditworthiness rating</p>
+            </div>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:rgba(255,255,255,0.15)">BETA</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="score-gauge">
+              <span class="font-bold" style="font-size:22px">72</span>
+              <span class="text-xs" style="color:rgba(255,255,255,0.7)">/100</span>
+            </div>
+            <div class="flex-1">
+              <p class="font-semibold text-sm mb-1">Good Standing</p>
+              <div class="space-y-1">
+                <div class="flex justify-between text-xs" style="color:rgba(255,255,255,0.7)"><span>Transactions</span><span>★★★★☆</span></div>
+                <div class="flex justify-between text-xs" style="color:rgba(255,255,255,0.7)"><span>On-time delivery</span><span>★★★★★</span></div>
+                <div class="flex justify-between text-xs" style="color:rgba(255,255,255,0.7)"><span>Rating avg</span><span>★★★★★</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 p-2 rounded-lg text-xs" style="background:rgba(255,255,255,0.12)">
+            🏦 Score 75+ unlocks Nkoso micro-financing. Keep selling!
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-2xl p-4" style="border:1.5px solid #e2e8f0">
+          <h3 class="font-bold text-sm mb-3" style="color:#0f172a">Quick Actions</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="qa-btn">
+              <div class="qa-icon" style="background:#d1fae5">
+                <svg class="w-5 h-5" style="color:#059669" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              </div>
+              <p class="text-xs font-semibold" style="color:#0f172a">Add Listing</p>
+            </div>
+            <div class="qa-btn">
+              <div class="qa-icon" style="background:#ede9fe">
+                <svg class="w-5 h-5" style="color:#7c3aed" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              </div>
+              <p class="text-xs font-semibold" style="color:#0f172a">Withdraw</p>
+            </div>
+            <div class="qa-btn">
+              <div class="qa-icon" style="background:#fef3c7">
+                <svg class="w-5 h-5" style="color:#d97706" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+              </div>
+              <p class="text-xs font-semibold" style="color:#0f172a">View Stats</p>
+            </div>
+            <div class="qa-btn">
+              <div class="qa-icon" style="background:#dbeafe">
+                <svg class="w-5 h-5" style="color:#2563eb" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+              </div>
+              <p class="text-xs font-semibold" style="color:#0f172a">Share Farm</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 4: Active Listings + Market Prices -->
+    <div class="grid grid-cols-3 gap-4">
+
+      <!-- Active Listings -->
+      <div class="col-span-2">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold" style="color:#0f172a">Active Listings</h3>
+          <a href="#" class="text-xs font-medium" style="color:#059669">Manage all →</a>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <!-- Listing 1 -->
+          <div class="listing-card">
+            <div style="height:100px;overflow:hidden">
+              <img src="https://images.unsplash.com/photo-1546793665-c74683f339c1?w=300&h=200&fit=crop" class="w-full h-full object-cover">
+            </div>
+            <div class="p-3">
+              <div class="flex items-center justify-between mb-1">
+                <p class="font-semibold text-xs">Roma Tomatoes</p>
+                <div class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')">
+                  <div class="toggle-dot"></div>
+                </div>
+              </div>
+              <p class="font-bold text-sm" style="color:#059669">₵7.20/kg</p>
+              <p class="text-xs" style="color:#94a3b8">48 kg left</p>
+              <div class="flex gap-1 mt-2">
+                <button class="flex-1 py-1 rounded text-xs font-medium" style="background:#f0fdf4;color:#059669;border:1px solid #6ee7b7">Edit</button>
+                <button class="flex-1 py-1 rounded text-xs font-medium" style="background:#f8fafc;color:#475569;border:1px solid #e2e8f0">Boost</button>
+              </div>
+            </div>
+          </div>
+          <!-- Listing 2 -->
+          <div class="listing-card">
+            <div style="height:100px;overflow:hidden">
+              <img src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=300&h=200&fit=crop" class="w-full h-full object-cover">
+            </div>
+            <div class="p-3">
+              <div class="flex items-center justify-between mb-1">
+                <p class="font-semibold text-xs">Scotch Bonnet</p>
+                <div class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')">
+                  <div class="toggle-dot"></div>
+                </div>
+              </div>
+              <p class="font-bold text-sm" style="color:#059669">₵22.00/kg</p>
+              <p class="text-xs" style="color:#f59e0b">⚠ 3 kg left</p>
+              <div class="flex gap-1 mt-2">
+                <button class="flex-1 py-1 rounded text-xs font-medium" style="background:#f0fdf4;color:#059669;border:1px solid #6ee7b7">Edit</button>
+                <button class="flex-1 py-1 rounded text-xs font-medium" style="background:#f8fafc;color:#475569;border:1px solid #e2e8f0">Restock</button>
+              </div>
+            </div>
+          </div>
+          <!-- Listing 3 -->
+          <div class="listing-card">
+            <div style="height:100px;overflow:hidden">
+              <img src="https://images.unsplash.com/photo-1518977676405-c12a9dd6e8a0?w=300&h=200&fit=crop" class="w-full h-full object-cover">
+            </div>
+            <div class="p-3">
+              <div class="flex items-center justify-between mb-1">
+                <p class="font-semibold text-xs">Red Onions</p>
+                <div class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')">
+                  <div class="toggle-dot"></div>
+                </div>
+              </div>
+              <p class="font-bold text-sm" style="color:#059669">₵5.20/kg</p>
+              <p class="text-xs" style="color:#94a3b8">120 kg left</p>
+              <div class="flex gap-1 mt-2">
+                <button class="flex-1 py-1 rounded text-xs font-medium" style="background:#f0fdf4;color:#059669;border:1px solid #6ee7b7">Edit</button>
+                <button class="flex-1 py-1 rounded text-xs font-medium" style="background:#f8fafc;color:#475569;border:1px solid #e2e8f0">Boost</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Market Prices Widget -->
+      <div class="bg-white rounded-2xl p-5" style="border:1.5px solid #e2e8f0">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-bold" style="color:#0f172a">Market Prices</h3>
+            <p class="text-xs" style="color:#64748b">Ashanti · Live today</p>
+          </div>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:rgba(52,211,153,0.15);color:#059669">LIVE</span>
+        </div>
+        <div>
+          <div class="price-row">
+            <div>
+              <p class="font-medium text-sm">Tomatoes</p>
+              <p class="text-xs" style="color:#64748b">Your price: ₵7.20</p>
+            </div>
+            <div class="text-right">
+              <p class="font-bold text-sm" style="color:#059669">₵8.50</p>
+              <p class="text-xs" style="color:#34d399">▲2.1%</p>
+            </div>
+          </div>
+          <div class="price-row">
+            <div>
+              <p class="font-medium text-sm">Pepper</p>
+              <p class="text-xs" style="color:#64748b">Your price: ₵22.00</p>
+            </div>
+            <div class="text-right">
+              <p class="font-bold text-sm" style="color:#059669">₵18.00</p>
+              <p class="text-xs" style="color:#f87171">▼2.1%</p>
+            </div>
+          </div>
+          <div class="price-row">
+            <div>
+              <p class="font-medium text-sm">Onions</p>
+              <p class="text-xs" style="color:#64748b">Your price: ₵5.20</p>
+            </div>
+            <div class="text-right">
+              <p class="font-bold text-sm" style="color:#059669">₵5.20</p>
+              <p class="text-xs" style="color:#34d399">▲3.4%</p>
+            </div>
+          </div>
+          <div class="price-row">
+            <div>
+              <p class="font-medium text-sm">Cassava</p>
+              <p class="text-xs" style="color:#64748b">Not listed</p>
+            </div>
+            <div class="text-right">
+              <p class="font-bold text-sm">₵3.80</p>
+              <p class="text-xs" style="color:#34d399">▲1.5%</p>
+            </div>
+          </div>
+          <div class="price-row">
+            <div>
+              <p class="font-medium text-sm">Maize</p>
+              <p class="text-xs" style="color:#64748b">Not listed</p>
+            </div>
+            <div class="text-right">
+              <p class="font-bold text-sm">₵4.20</p>
+              <p class="text-xs" style="color:#f87171">▼0.8%</p>
+            </div>
+          </div>
+        </div>
+        <a href="#" class="flex items-center justify-center gap-1 mt-3 text-xs font-medium" style="color:#059669">Full price dashboard →</a>
+      </div>
+    </div>
+    <!-- end row 4 -->
+
+  </div>
+  <!-- end content -->
+</div>
+<!-- end main -->
+
+<script>
+// Active nav highlight
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click',function(){
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+</script>
+
+<!-- DEMO NAVIGATION -->
+<div id="demoNav" style="position:fixed;bottom:20px;right:20px;z-index:9999;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <button onclick="document.getElementById('demoMenu').style.display=document.getElementById('demoMenu').style.display==='none'?'block':'none'" 
+    style="width:52px;height:52px;border-radius:50%;background:#00413b;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,65,59,0.4);display:flex;align-items:center;justify-content:center">
+    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <div id="demoMenu" style="display:none;position:absolute;bottom:60px;right:0;background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);border:1.5px solid #e2e8f0;min-width:220px;overflow:hidden">
+    <div style="background:#00413b;padding:10px 14px">
+      <p style="color:#34d399;font-size:10px;font-weight:700;letter-spacing:.05em;margin:0">AGRIKONNECT DEMO</p>
+      <p style="color:rgba(255,255,255,0.7);font-size:11px;margin:2px 0 0">Jump to any page</p>
+    </div>
+    <div style="padding:6px">
+      <a href="index.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🏠 Homepage</a>
+      <a href="AgriKonnect_Auth.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🔐 Login / Register</a>
+      <a href="AgriKonnect_Browse_Page.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🛒 Browse Produce</a>
+      <a href="AgriKonnect_Product_Detail.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🍅 Product Detail</a>
+      <a href="AgriKonnect_Cart_Checkout.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">💳 Cart + Checkout</a>
+      <div style="height:1px;background:#f1f5f9;margin:4px 6px"></div>
+      <a href="AgriKonnect_Farmer_Dashboard.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🌾 Farmer Dashboard</a>
+      <a href="AgriKonnect_Buyer_Dashboard.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📦 Buyer Dashboard</a>
+      <div style="height:1px;background:#f1f5f9;margin:4px 6px"></div>
+      <a href="AgriKonnect_Price_Intelligence.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📊 Price Intelligence</a>
+      <a href="AgriKonnect_Post_Request.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📋 Post a Request</a>
+    </div>
+  </div>
+</div>
+<!-- END DEMO NAVIGATION -->
+</body>
+</html>

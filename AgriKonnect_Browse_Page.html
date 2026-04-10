@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Browse Produce — AgriKonnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; }
+
+/* Ticker */
+.ticker-wrap { overflow: hidden; white-space: nowrap; }
+.ticker-track { display: inline-block; animation: ticker 35s linear infinite; }
+.ticker-track:hover { animation-play-state: paused; }
+@keyframes ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+
+/* Sticky nav */
+nav { position: sticky; top: 0; z-index: 50; }
+
+/* Card hover */
+.product-card { transition: all 0.2s; border: 1.5px solid #e2e8f0; }
+.product-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.10); border-color: #6ee7b7; }
+.product-card img { transition: transform 0.3s; }
+.product-card:hover img { transform: scale(1.04); }
+
+/* Filter checkbox */
+.filter-check { accent-color: #059669; width:15px; height:15px; cursor:pointer; }
+
+/* Range input */
+input[type=range] { accent-color: #059669; width: 100%; }
+
+/* Active filter chip */
+.filter-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #d1fae5; color: #065f46;
+  border: 1px solid #6ee7b7;
+  border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 500;
+  cursor: pointer;
+}
+.filter-chip:hover { background: #a7f3d0; }
+
+/* Badge styles */
+.badge-hot { background:#fef3c7; color:#92400e; border:1px solid #fcd34d; }
+.badge-fair { background:#dbeafe; color:#1e40af; border:1px solid #93c5fd; }
+.badge-above { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; }
+.badge-fresh { background:#10b981; color:white; }
+.badge-soon { background:#f59e0b; color:white; }
+.badge-escrow { background:#ede9fe; color:#5b21b6; border:1px solid #c4b5fd; }
+
+/* Sidebar category active */
+.cat-item { padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size:14px; transition: all 0.15s; display:flex; justify-content:space-between; align-items:center; }
+.cat-item:hover { background: #f0fdf4; color:#059669; }
+.cat-item.active { background: #d1fae5; color: #065f46; font-weight: 600; }
+
+/* Stars */
+.stars { color: #f59e0b; font-size: 12px; letter-spacing: 1px; }
+
+/* Sort select */
+select { appearance: none; background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") no-repeat right 10px center/16px; padding-right: 32px; }
+
+/* Mobile filter button */
+.mobile-filter-btn { display: none; }
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .mobile-filter-btn { display: flex; }
+  .product-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+/* Post a Request box */
+.request-box {
+  background: linear-gradient(135deg, #065f46 0%, #059669 100%);
+  border-radius: 12px;
+  padding: 16px;
+  color: white;
+}
+
+/* Pagination */
+.page-btn { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.15s; border: 1.5px solid #e2e8f0; }
+.page-btn:hover { border-color:#059669; color:#059669; }
+.page-btn.active { background:#059669; color:white; border-color:#059669; }
+
+/* Group badge */
+.grouped-badge { background:#f0fdf4; border:1px solid #6ee7b7; color:#065f46; font-size:11px; padding:2px 8px; border-radius:999px; }
+
+/* Skeleton */
+@keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+.skeleton { background: linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%); background-size:200% 100%; animation: shimmer 1.5s infinite; border-radius:8px; }
+</style>
+</head>
+<body>
+
+<!-- ── STICKY NAV ── -->
+<nav style="background:rgba(0,65,59,0.97);border-bottom:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(8px)">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3 md:gap-4">
+    <!-- Logo -->
+    <a href="index.html" class="flex items-center gap-2 flex-shrink-0 mr-2">
+      <div class="w-7 h-7 bg-emerald-500 rounded-lg flex items-center justify-center">
+        <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945"/></svg>
+      </div>
+      <span class="text-white font-bold text-lg hidden sm:block">AgriKonnect</span>
+    </a>
+    <!-- Search -->
+    <div class="flex-1 flex items-center bg-white rounded-lg px-3 py-2 gap-2 max-w-2xl">
+      <svg class="w-4 h-4 flex-shrink-0" style="color:#94a3b8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <input type="text" placeholder="Search tomatoes, maize, yam..." value="tomatoes" class="flex-1 outline-none text-sm" style="color:#1e293b">
+      <button class="px-3 py-1 rounded-md text-white text-sm font-medium" style="background:#059669">Search</button>
+    </div>
+    <!-- Nav icons -->
+    <div class="flex items-center gap-2 md:gap-3 flex-shrink-0">
+      <button class="relative p-2 rounded-lg hover:bg-white/10" style="color:white">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        <span class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full text-xs flex items-center justify-center font-bold" style="color:#065f46">3</span>
+      </button>
+      <button class="hidden md:block px-4 py-1.5 text-sm font-medium rounded-lg" style="background:rgba(255,255,255,0.12);color:white">Login</button>
+      <button class="px-4 py-1.5 text-sm font-medium rounded-lg" style="background:#059669;color:white">Register</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ── MARKET TICKER ── -->
+<div style="background:#003330;border-bottom:1px solid rgba(255,255,255,0.1)">
+  <div class="max-w-7xl mx-auto px-4 py-2 flex items-center gap-3">
+    <span class="text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0" style="background:rgba(52,211,153,0.2);color:#34d399">LIVE</span>
+    <div class="ticker-wrap flex-1 overflow-hidden">
+      <div class="ticker-track text-sm">
+        <span class="inline-flex items-center gap-2 mx-5"><span class="font-medium text-white">Tomatoes</span><span style="color:#34d399" class="font-bold">₵8.50/kg</span><span style="color:#34d399" class="text-xs">▲2.1%</span><span style="color:#64748b">Greater Accra</span></span>
+        <span class="inline-flex items-center gap-2 mx-5"><span class="font-medium text-white">Maize</span><span style="color:#34d399" class="font-bold">₵4.20/kg</span><span style="color:#f87171" class="text-xs">▼0.8%</span><span style="color:#64748b">Ashanti</span></span>
+        <span class="inline-flex items-center gap-2 mx-5"><span class="font-medium text-white">Cassava</span><span style="color:#34d399" class="font-bold">₵3.80/kg</span><span style="color:#34d399" class="text-xs">▲1.5%</span><span style="color:#64748b">Eastern</span></span>
+        <span class="inline-flex items-center gap-2 mx-5"><span class="font-medium text-white">Plantain</span><span style="color:#34d399" class="font-bold">₵12.00/bunch</span><span style="color:#f87171" class="text-xs">▼1.2%</span><span style="color:#64748b">Central</span></span>
+        <span class="inline-flex items-center gap-2 mx-5"><span class="font-medium text-white">Yam</span><span style="color:#34d399" class="font-bold">₵15.00/tuber</span><span style="color:#34d399" class="text-xs">▲0.5%</span><span style="color:#64748b">Volta</span></span>
+        <span class="inline-flex items-center gap-2 mx-5"><span class="font-medium text-white">Onions</span><span style="color:#34d399" class="font-bold">₵5.20/kg</span><span style="color:#34d399" class="text-xs">▲3.4%</span><span style="color:#64748b">Northern</span></span>
+        <span class="inline-flex items-center gap-2 mx-5"><span class="font-medium text-white">Pepper</span><span style="color:#34d399" class="font-bold">₵18.00/kg</span><span style="color:#f87171" class="text-xs">▼2.1%</span><span style="color:#64748b">Brong-Ahafo</span></span>
+        <!-- loop -->
+        <span class="inline-flex items-center gap-2 mx-5"><span class="font-medium text-white">Tomatoes</span><span style="color:#34d399" class="font-bold">₵8.50/kg</span><span style="color:#34d399" class="text-xs">▲2.1%</span><span style="color:#64748b">Greater Accra</span></span>
+        <span class="inline-flex items-center gap-2 mx-5"><span class="font-medium text-white">Maize</span><span style="color:#34d399" class="font-bold">₵4.20/kg</span><span style="color:#f87171" class="text-xs">▼0.8%</span><span style="color:#64748b">Ashanti</span></span>
+        <span class="inline-flex items-center gap-2 mx-5"><span class="font-medium text-white">Cassava</span><span style="color:#34d399" class="font-bold">₵3.80/kg</span><span style="color:#34d399" class="text-xs">▲1.5%</span><span style="color:#64748b">Eastern</span></span>
+        <span class="inline-flex items-center gap-2 mx-5"><span class="font-medium text-white">Plantain</span><span style="color:#34d399" class="font-bold">₵12.00/bunch</span><span style="color:#f87171" class="text-xs">▼1.2%</span><span style="color:#64748b">Central</span></span>
+        <span class="inline-flex items-center gap-2 mx-5"><span class="font-medium text-white">Yam</span><span style="color:#34d399" class="font-bold">₵15.00/tuber</span><span style="color:#34d399" class="text-xs">▲0.5%</span><span style="color:#64748b">Volta</span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAGE HEADER + BREADCRUMB ── -->
+<div style="background:white;border-bottom:1px solid #e2e8f0">
+  <div class="max-w-7xl mx-auto px-4 py-3">
+    <div class="flex items-center gap-2 text-sm mb-2" style="color:#64748b">
+      <a href="#" style="color:#059669">Home</a>
+      <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      <span>Browse Produce</span>
+      <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      <span style="color:#1e293b;font-weight:500">Tomatoes</span>
+    </div>
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div>
+        <h1 class="text-xl font-bold" style="color:#0f172a">Browse Produce</h1>
+        <p class="text-sm" style="color:#64748b"><strong style="color:#059669">247 listings</strong> found · Showing 1–24 of 247</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <!-- Mobile filter btn -->
+        <button class="mobile-filter-btn items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium" style="border-color:#e2e8f0;color:#475569">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+          Filters
+        </button>
+        <!-- Sort -->
+        <select class="px-3 py-2 rounded-lg border text-sm" style="border-color:#e2e8f0;color:#475569;background:white">
+          <option>Sort: Most Relevant</option>
+          <option>Price: Low to High</option>
+          <option>Price: High to Low</option>
+          <option>Newest First</option>
+          <option>Highest Rated</option>
+          <option>Available Now</option>
+        </select>
+        <!-- View toggle -->
+        <div class="hidden md:flex items-center border rounded-lg overflow-hidden" style="border-color:#e2e8f0">
+          <button class="p-2" style="background:#059669;color:white">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M4 6h4v4H4V6zm6 0h4v4h-4V6zm6 0h4v4h-4V6zM4 12h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zM4 18h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z"/></svg>
+          </button>
+          <button class="p-2" style="color:#94a3b8">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Active filter chips -->
+    <div class="flex flex-wrap gap-2 mt-3">
+      <span class="filter-chip">Vegetables <span onclick="this.parentElement.remove()" class="font-bold ml-1">×</span></span>
+      <span class="filter-chip">Ashanti Region <span onclick="this.parentElement.remove()" class="font-bold ml-1">×</span></span>
+      <span class="filter-chip">₵5 – ₵20/kg <span onclick="this.parentElement.remove()" class="font-bold ml-1">×</span></span>
+      <span class="filter-chip">In Stock <span onclick="this.parentElement.remove()" class="font-bold ml-1">×</span></span>
+      <button class="text-xs font-medium" style="color:#059669;text-decoration:underline">Clear all filters</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN LAYOUT ── -->
+<div class="max-w-7xl mx-auto px-4 py-6">
+  <div class="flex gap-6">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="sidebar w-64 flex-shrink-0">
+
+      <!-- Categories -->
+      <div class="bg-white rounded-xl p-4 mb-4" style="border:1.5px solid #e2e8f0">
+        <h3 class="font-bold text-sm mb-3 uppercase tracking-wide" style="color:#64748b">Categories</h3>
+        <div class="space-y-0.5">
+          <div class="cat-item" onclick="setActive(this)">All Produce <span class="text-xs" style="color:#94a3b8">247</span></div>
+          <div class="cat-item active" onclick="setActive(this)">Vegetables <span class="text-xs" style="color:#94a3b8">84</span></div>
+          <div class="cat-item" onclick="setActive(this)">
+            <span>Crops & Grains</span>
+            <span class="text-xs" style="color:#94a3b8">63</span>
+          </div>
+          <div class="cat-item" onclick="setActive(this)">Fruits <span class="text-xs" style="color:#94a3b8">41</span></div>
+          <div class="cat-item" onclick="setActive(this)">Tubers & Roots <span class="text-xs" style="color:#94a3b8">38</span></div>
+          <div class="cat-item" onclick="setActive(this)">Livestock <span class="text-xs" style="color:#94a3b8">22</span></div>
+          <div class="cat-item" onclick="setActive(this)">Legumes & Nuts <span class="text-xs" style="color:#94a3b8">19</span></div>
+          <div class="cat-item" onclick="setActive(this)">Spices & Herbs <span class="text-xs" style="color:#94a3b8">15</span></div>
+          <div class="cat-item" onclick="setActive(this)">Processed Products <span class="text-xs" style="color:#94a3b8">11</span></div>
+        </div>
+      </div>
+
+      <!-- Region -->
+      <div class="bg-white rounded-xl p-4 mb-4" style="border:1.5px solid #e2e8f0">
+        <h3 class="font-bold text-sm mb-3 uppercase tracking-wide" style="color:#64748b">Region</h3>
+        <div class="space-y-2">
+          <label class="flex items-center gap-2 cursor-pointer text-sm">
+            <input type="checkbox" class="filter-check"> <span>All Regions</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer text-sm">
+            <input type="checkbox" class="filter-check" checked> <span>Ashanti <span style="color:#94a3b8">(38)</span></span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer text-sm">
+            <input type="checkbox" class="filter-check"> <span>Greater Accra <span style="color:#94a3b8">(31)</span></span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer text-sm">
+            <input type="checkbox" class="filter-check"> <span>Eastern <span style="color:#94a3b8">(24)</span></span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer text-sm">
+            <input type="checkbox" class="filter-check"> <span>Northern <span style="color:#94a3b8">(19)</span></span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer text-sm">
+            <input type="checkbox" class="filter-check"> <span>Central <span style="color:#94a3b8">(17)</span></span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer text-sm">
+            <input type="checkbox" class="filter-check"> <span>Volta <span style="color:#94a3b8">(14)</span></span>
+          </label>
+          <button class="text-xs font-medium mt-1" style="color:#059669">+ Show all 16 regions</button>
+        </div>
+      </div>
+
+      <!-- Price Range -->
+      <div class="bg-white rounded-xl p-4 mb-4" style="border:1.5px solid #e2e8f0">
+        <h3 class="font-bold text-sm mb-3 uppercase tracking-wide" style="color:#64748b">Price Range (₵/kg)</h3>
+        <input type="range" min="0" max="100" value="50" class="mb-3">
+        <div class="flex items-center gap-2">
+          <input type="number" placeholder="Min" value="5" class="w-full px-2 py-1.5 rounded-lg border text-sm" style="border-color:#e2e8f0">
+          <span style="color:#94a3b8">–</span>
+          <input type="number" placeholder="Max" value="20" class="w-full px-2 py-1.5 rounded-lg border text-sm" style="border-color:#e2e8f0">
+        </div>
+        <button class="w-full mt-2 py-1.5 rounded-lg text-sm font-medium" style="background:#f0fdf4;color:#059669;border:1px solid #6ee7b7">Apply</button>
+      </div>
+
+      <!-- Availability -->
+      <div class="bg-white rounded-xl p-4 mb-4" style="border:1.5px solid #e2e8f0">
+        <h3 class="font-bold text-sm mb-3 uppercase tracking-wide" style="color:#64748b">Availability</h3>
+        <div class="space-y-2">
+          <label class="flex items-center gap-2 cursor-pointer text-sm">
+            <input type="checkbox" class="filter-check" checked>
+            <span class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full" style="background:#10b981"></span>
+              Available Now
+            </span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer text-sm">
+            <input type="checkbox" class="filter-check">
+            <span class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full" style="background:#f59e0b"></span>
+              Ready in 1–2 weeks
+            </span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer text-sm">
+            <input type="checkbox" class="filter-check">
+            <span class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full" style="background:#94a3b8"></span>
+              Next Season
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Rating -->
+      <div class="bg-white rounded-xl p-4 mb-4" style="border:1.5px solid #e2e8f0">
+        <h3 class="font-bold text-sm mb-3 uppercase tracking-wide" style="color:#64748b">Farmer Rating</h3>
+        <div class="space-y-2">
+          <label class="flex items-center gap-2 cursor-pointer text-sm">
+            <input type="radio" name="rating" class="filter-check">
+            <span class="stars">★★★★★</span><span style="color:#64748b">(4.8+)</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer text-sm">
+            <input type="radio" name="rating" class="filter-check" checked>
+            <span class="stars">★★★★☆</span><span style="color:#64748b">(4+)</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer text-sm">
+            <input type="radio" name="rating" class="filter-check">
+            <span class="stars">★★★☆☆</span><span style="color:#64748b">(3+)</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer text-sm">
+            <input type="radio" name="rating" class="filter-check">
+            <span>Any rating</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Verified Only -->
+      <div class="bg-white rounded-xl p-4 mb-4" style="border:1.5px solid #e2e8f0">
+        <label class="flex items-center justify-between cursor-pointer">
+          <div>
+            <p class="text-sm font-semibold">Verified Farmers Only</p>
+            <p class="text-xs" style="color:#64748b">KYC-verified, ID confirmed</p>
+          </div>
+          <div onclick="this.classList.toggle('on')" class="toggle-switch relative w-10 h-5 rounded-full transition-colors" style="background:#059669">
+            <div class="absolute top-0.5 right-0.5 w-4 h-4 bg-white rounded-full shadow"></div>
+          </div>
+        </label>
+      </div>
+
+      <!-- POST A REQUEST BOX -->
+      <div class="request-box mb-4">
+        <div class="flex items-center gap-2 mb-2">
+          <svg class="w-5 h-5" style="color:#6ee7b7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          <h4 class="font-bold text-sm">Can't find what you need?</h4>
+        </div>
+        <p class="text-xs mb-3" style="color:#a7f3d0">Post a request and let farmers come to you with offers.</p>
+        <button class="w-full py-2 rounded-lg text-sm font-semibold" style="background:white;color:#065f46">+ Post a Request</button>
+      </div>
+
+    </aside>
+
+    <!-- ── PRODUCT GRID ── -->
+    <div class="flex-1">
+
+      <!-- Grouped result notice -->
+      <div class="flex items-center gap-3 p-3 rounded-xl mb-4 text-sm" style="background:#f0fdf4;border:1px solid #6ee7b7">
+        <svg class="w-5 h-5 flex-shrink-0" style="color:#059669" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span style="color:#065f46"><strong>12 farmers</strong> are selling Tomatoes in Ashanti. Results are grouped by crop. <button style="color:#059669;text-decoration:underline" class="font-medium">Show individual listings</button></span>
+      </div>
+
+      <!-- Product grid -->
+      <div class="product-grid grid gap-4" style="grid-template-columns:repeat(3,1fr)">
+
+        <!-- Card 1: Hot Deal -->
+        <div class="product-card bg-white rounded-xl overflow-hidden cursor-pointer">
+          <div class="relative overflow-hidden" style="height:180px">
+            <img src="https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400&h=300&fit=crop" alt="Tomatoes" class="w-full h-full object-cover">
+            <div class="absolute top-2 left-2 flex flex-col gap-1">
+              <span class="badge-hot text-xs font-bold px-2 py-0.5 rounded-full">🔥 Hot Deal</span>
+              <span class="badge-fresh text-xs font-medium px-2 py-0.5 rounded-full">Available Now</span>
+            </div>
+            <button class="absolute top-2 right-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow" style="color:#94a3b8">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            </button>
+          </div>
+          <div class="p-3">
+            <div class="flex items-start justify-between mb-1">
+              <h3 class="font-bold text-sm leading-tight" style="color:#0f172a">Roma Tomatoes</h3>
+              <span class="grouped-badge ml-1 flex-shrink-0">12 farmers</span>
+            </div>
+            <div class="flex items-center gap-1 mb-1">
+              <span class="stars text-xs">★★★★★</span>
+              <span class="text-xs" style="color:#64748b">4.9 (84 reviews)</span>
+            </div>
+            <p class="text-xs mb-2 flex items-center gap-1" style="color:#64748b">
+              <svg class="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+              Kumasi · Ashanti · 12 km away
+            </p>
+            <div class="flex items-end justify-between mb-2">
+              <div>
+                <span class="font-bold text-lg" style="color:#059669">₵7.20</span>
+                <span class="text-xs" style="color:#94a3b8">/kg</span>
+                <div class="text-xs" style="color:#64748b">Market avg: <span style="color:#6b7280;text-decoration:line-through">₵8.50</span></div>
+              </div>
+              <span class="badge-escrow text-xs px-2 py-0.5 rounded-full">🔒 Escrow</span>
+            </div>
+            <div class="flex gap-2">
+              <button class="flex-1 py-2 rounded-lg text-xs font-semibold" style="background:#059669;color:white">Add to Cart</button>
+              <button class="px-3 py-2 rounded-lg border text-xs" style="border-color:#e2e8f0;color:#475569">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Fair Price -->
+        <div class="product-card bg-white rounded-xl overflow-hidden cursor-pointer">
+          <div class="relative overflow-hidden" style="height:180px">
+            <img src="https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?w=400&h=300&fit=crop" alt="Cassava" class="w-full h-full object-cover">
+            <div class="absolute top-2 left-2 flex flex-col gap-1">
+              <span class="badge-fair text-xs font-bold px-2 py-0.5 rounded-full">✅ Fair Price</span>
+              <span class="badge-fresh text-xs font-medium px-2 py-0.5 rounded-full">Available Now</span>
+            </div>
+            <button class="absolute top-2 right-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow" style="color:#f43f5e">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            </button>
+          </div>
+          <div class="p-3">
+            <div class="flex items-start justify-between mb-1">
+              <h3 class="font-bold text-sm" style="color:#0f172a">Fresh Cassava</h3>
+              <span class="grouped-badge ml-1">8 farmers</span>
+            </div>
+            <div class="flex items-center gap-1 mb-1">
+              <span class="stars text-xs">★★★★☆</span>
+              <span class="text-xs" style="color:#64748b">4.6 (52 reviews)</span>
+            </div>
+            <p class="text-xs mb-2 flex items-center gap-1" style="color:#64748b">
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+              Obuasi · Ashanti
+            </p>
+            <div class="flex items-end justify-between mb-2">
+              <div>
+                <span class="font-bold text-lg" style="color:#059669">₵3.80</span>
+                <span class="text-xs" style="color:#94a3b8">/kg</span>
+                <div class="text-xs" style="color:#059669">At market rate</div>
+              </div>
+              <span class="badge-escrow text-xs px-2 py-0.5 rounded-full">🔒 Escrow</span>
+            </div>
+            <div class="flex gap-2">
+              <button class="flex-1 py-2 rounded-lg text-xs font-semibold" style="background:#059669;color:white">Add to Cart</button>
+              <button class="px-3 py-2 rounded-lg border text-xs" style="border-color:#e2e8f0;color:#475569">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Harvest soon -->
+        <div class="product-card bg-white rounded-xl overflow-hidden cursor-pointer">
+          <div class="relative overflow-hidden" style="height:180px">
+            <img src="https://images.unsplash.com/photo-1596591868231-05e66ee29b1a?w=400&h=300&fit=crop" alt="Yam" class="w-full h-full object-cover">
+            <div class="absolute top-2 left-2 flex flex-col gap-1">
+              <span class="badge-fair text-xs font-bold px-2 py-0.5 rounded-full">✅ Fair Price</span>
+              <span class="badge-soon text-xs font-medium px-2 py-0.5 rounded-full">🕐 Ready in 14 days</span>
+            </div>
+            <button class="absolute top-2 right-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow" style="color:#94a3b8">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            </button>
+          </div>
+          <div class="p-3">
+            <div class="flex items-start justify-between mb-1">
+              <h3 class="font-bold text-sm" style="color:#0f172a">Pona Yam</h3>
+              <span class="grouped-badge ml-1">5 farmers</span>
+            </div>
+            <div class="flex items-center gap-1 mb-1">
+              <span class="stars text-xs">★★★★★</span>
+              <span class="text-xs" style="color:#64748b">4.8 (37 reviews)</span>
+            </div>
+            <p class="text-xs mb-2 flex items-center gap-1" style="color:#64748b">
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+              Volta Region
+            </p>
+            <div class="flex items-end justify-between mb-2">
+              <div>
+                <span class="font-bold text-lg" style="color:#059669">₵14.50</span>
+                <span class="text-xs" style="color:#94a3b8">/tuber</span>
+                <div class="text-xs" style="color:#94a3b8">Pre-order available</div>
+              </div>
+              <span class="badge-escrow text-xs px-2 py-0.5 rounded-full">🔒 Escrow</span>
+            </div>
+            <div class="flex gap-2">
+              <button class="flex-1 py-2 rounded-lg text-xs font-semibold" style="background:#f59e0b;color:white">Pre-Order</button>
+              <button class="px-3 py-2 rounded-lg border text-xs" style="border-color:#e2e8f0;color:#475569">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Above market -->
+        <div class="product-card bg-white rounded-xl overflow-hidden cursor-pointer">
+          <div class="relative overflow-hidden" style="height:180px">
+            <img src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=400&h=300&fit=crop" alt="Pepper" class="w-full h-full object-cover">
+            <div class="absolute top-2 left-2 flex flex-col gap-1">
+              <span class="badge-above text-xs font-bold px-2 py-0.5 rounded-full">⚠ Above Market</span>
+              <span class="badge-fresh text-xs font-medium px-2 py-0.5 rounded-full">Available Now</span>
+            </div>
+          </div>
+          <div class="p-3">
+            <div class="flex items-start justify-between mb-1">
+              <h3 class="font-bold text-sm" style="color:#0f172a">Scotch Bonnet Pepper</h3>
+            </div>
+            <div class="flex items-center gap-1 mb-1">
+              <span class="stars text-xs">★★★★☆</span>
+              <span class="text-xs" style="color:#64748b">4.3 (19 reviews)</span>
+            </div>
+            <p class="text-xs mb-2 flex items-center gap-1" style="color:#64748b">
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+              Mampong · Ashanti
+            </p>
+            <div class="flex items-end justify-between mb-2">
+              <div>
+                <span class="font-bold text-lg" style="color:#059669">₵22.00</span>
+                <span class="text-xs" style="color:#94a3b8">/kg</span>
+                <div class="text-xs" style="color:#ef4444">+22% above avg ₵18.00</div>
+              </div>
+              <span class="badge-escrow text-xs px-2 py-0.5 rounded-full">🔒 Escrow</span>
+            </div>
+            <div class="flex gap-2">
+              <button class="flex-1 py-2 rounded-lg text-xs font-semibold" style="background:#059669;color:white">Add to Cart</button>
+              <button class="px-3 py-2 rounded-lg border text-xs" style="border-color:#e2e8f0;color:#475569">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5: Hot Deal plantain -->
+        <div class="product-card bg-white rounded-xl overflow-hidden cursor-pointer">
+          <div class="relative overflow-hidden" style="height:180px">
+            <img src="https://images.unsplash.com/photo-1504544750208-dc0358e63f7f?w=400&h=300&fit=crop" alt="Plantain" class="w-full h-full object-cover">
+            <div class="absolute top-2 left-2 flex flex-col gap-1">
+              <span class="badge-hot text-xs font-bold px-2 py-0.5 rounded-full">🔥 Hot Deal</span>
+              <span class="badge-fresh text-xs font-medium px-2 py-0.5 rounded-full">Available Now</span>
+            </div>
+          </div>
+          <div class="p-3">
+            <div class="flex items-start justify-between mb-1">
+              <h3 class="font-bold text-sm" style="color:#0f172a">Ripe Plantain</h3>
+              <span class="grouped-badge ml-1">9 farmers</span>
+            </div>
+            <div class="flex items-center gap-1 mb-1">
+              <span class="stars text-xs">★★★★★</span>
+              <span class="text-xs" style="color:#64748b">4.7 (63 reviews)</span>
+            </div>
+            <p class="text-xs mb-2 flex items-center gap-1" style="color:#64748b">
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+              Central Region
+            </p>
+            <div class="flex items-end justify-between mb-2">
+              <div>
+                <span class="font-bold text-lg" style="color:#059669">₵9.50</span>
+                <span class="text-xs" style="color:#94a3b8">/bunch</span>
+                <div class="text-xs" style="color:#64748b">Avg: <span style="color:#6b7280;text-decoration:line-through">₵12.00</span></div>
+              </div>
+              <span class="badge-escrow text-xs px-2 py-0.5 rounded-full">🔒 Escrow</span>
+            </div>
+            <div class="flex gap-2">
+              <button class="flex-1 py-2 rounded-lg text-xs font-semibold" style="background:#059669;color:white">Add to Cart</button>
+              <button class="px-3 py-2 rounded-lg border text-xs" style="border-color:#e2e8f0;color:#475569">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6: Maize -->
+        <div class="product-card bg-white rounded-xl overflow-hidden cursor-pointer">
+          <div class="relative overflow-hidden" style="height:180px">
+            <img src="https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?w=400&h=300&fit=crop" alt="Maize" class="w-full h-full object-cover">
+            <div class="absolute top-2 left-2 flex flex-col gap-1">
+              <span class="badge-fair text-xs font-bold px-2 py-0.5 rounded-full">✅ Fair Price</span>
+              <span class="badge-soon text-xs font-medium px-2 py-0.5 rounded-full">🕐 Ready in 7 days</span>
+            </div>
+          </div>
+          <div class="p-3">
+            <div class="flex items-start justify-between mb-1">
+              <h3 class="font-bold text-sm" style="color:#0f172a">White Maize (Bulk)</h3>
+              <span class="grouped-badge ml-1">6 farmers</span>
+            </div>
+            <div class="flex items-center gap-1 mb-1">
+              <span class="stars text-xs">★★★★☆</span>
+              <span class="text-xs" style="color:#64748b">4.5 (41 reviews)</span>
+            </div>
+            <p class="text-xs mb-2 flex items-center gap-1" style="color:#64748b">
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+              Ejura · Ashanti
+            </p>
+            <div class="flex items-end justify-between mb-2">
+              <div>
+                <span class="font-bold text-lg" style="color:#059669">₵4.20</span>
+                <span class="text-xs" style="color:#94a3b8">/kg</span>
+                <div class="text-xs" style="color:#059669">At market rate</div>
+              </div>
+              <span class="badge-escrow text-xs px-2 py-0.5 rounded-full">🔒 Escrow</span>
+            </div>
+            <div class="flex gap-2">
+              <button class="flex-1 py-2 rounded-lg text-xs font-semibold" style="background:#f59e0b;color:white">Pre-Order</button>
+              <button class="px-3 py-2 rounded-lg border text-xs" style="border-color:#e2e8f0;color:#475569">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <!-- end grid -->
+
+      <!-- Load more / Pagination -->
+      <div class="flex items-center justify-between mt-8">
+        <p class="text-sm" style="color:#64748b">Showing 1–6 of 247 listings</p>
+        <div class="flex items-center gap-1">
+          <button class="page-btn" style="color:#94a3b8">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <button class="page-btn active">1</button>
+          <button class="page-btn">2</button>
+          <button class="page-btn">3</button>
+          <span class="px-1" style="color:#94a3b8">...</span>
+          <button class="page-btn">21</button>
+          <button class="page-btn" style="color:#94a3b8">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+        <button class="px-4 py-2 rounded-lg text-sm font-medium" style="background:#059669;color:white">Load More</button>
+      </div>
+    </div>
+    <!-- end product grid -->
+  </div>
+</div>
+
+<!-- ── MINI FOOTER ── -->
+<footer class="mt-12 py-6" style="background:#00413b;border-top:1px solid rgba(255,255,255,0.1)">
+  <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-sm" style="color:#94a3b8">
+    <p>© 2026 AgriKonnect — All Rights Reserved</p>
+    <div class="flex gap-6">
+      <a href="#" class="hover:text-white transition-colors">Terms</a>
+      <a href="#" class="hover:text-white transition-colors">Privacy</a>
+      <a href="#" class="hover:text-white transition-colors">Support</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+function setActive(el) {
+  document.querySelectorAll('.cat-item').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+}
+</script>
+
+<!-- DEMO NAVIGATION -->
+<div id="demoNav" style="position:fixed;bottom:20px;right:20px;z-index:9999;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <button onclick="document.getElementById('demoMenu').style.display=document.getElementById('demoMenu').style.display==='none'?'block':'none'" 
+    style="width:52px;height:52px;border-radius:50%;background:#00413b;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,65,59,0.4);display:flex;align-items:center;justify-content:center">
+    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <div id="demoMenu" style="display:none;position:absolute;bottom:60px;right:0;background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);border:1.5px solid #e2e8f0;min-width:220px;overflow:hidden">
+    <div style="background:#00413b;padding:10px 14px">
+      <p style="color:#34d399;font-size:10px;font-weight:700;letter-spacing:.05em;margin:0">AGRIKONNECT DEMO</p>
+      <p style="color:rgba(255,255,255,0.7);font-size:11px;margin:2px 0 0">Jump to any page</p>
+    </div>
+    <div style="padding:6px">
+      <a href="index.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🏠 Homepage</a>
+      <a href="AgriKonnect_Auth.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🔐 Login / Register</a>
+      <a href="AgriKonnect_Browse_Page.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🛒 Browse Produce</a>
+      <a href="AgriKonnect_Product_Detail.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🍅 Product Detail</a>
+      <a href="AgriKonnect_Cart_Checkout.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">💳 Cart + Checkout</a>
+      <div style="height:1px;background:#f1f5f9;margin:4px 6px"></div>
+      <a href="AgriKonnect_Farmer_Dashboard.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🌾 Farmer Dashboard</a>
+      <a href="AgriKonnect_Buyer_Dashboard.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📦 Buyer Dashboard</a>
+      <div style="height:1px;background:#f1f5f9;margin:4px 6px"></div>
+      <a href="AgriKonnect_Price_Intelligence.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📊 Price Intelligence</a>
+      <a href="AgriKonnect_Post_Request.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📋 Post a Request</a>
+    </div>
+  </div>
+</div>
+<!-- END DEMO NAVIGATION -->
+</body>
+</html>

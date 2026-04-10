@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roma Tomatoes — AgriKonnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f8fafc;color:#1e293b}
+nav{position:sticky;top:0;z-index:50}
+
+/* Ticker */
+.ticker-wrap{overflow:hidden;white-space:nowrap}
+.ticker-track{display:inline-block;animation:ticker 35s linear infinite}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* Gallery */
+.thumb{border:2px solid transparent;border-radius:8px;overflow:hidden;cursor:pointer;transition:all .2s}
+.thumb.active,.thumb:hover{border-color:#059669}
+.main-img{transition:opacity .3s}
+
+/* Badge */
+.badge-hot{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+.badge-fair{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
+.badge-above{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.badge-fresh{background:#10b981;color:white}
+.badge-soon{background:#f59e0b;color:white}
+.badge-escrow{background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd}
+.badge-verified{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7}
+
+/* Qty btns */
+.qty-btn{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1.5px solid #e2e8f0;cursor:pointer;font-size:18px;transition:all .2s}
+.qty-btn:hover{border-color:#059669;color:#059669}
+
+/* Tabs */
+.tab{padding:12px 20px;cursor:pointer;font-size:14px;font-weight:500;border-bottom:2.5px solid transparent;transition:all .2s;color:#64748b}
+.tab:hover{color:#059669}
+.tab.active{color:#059669;border-bottom-color:#059669}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* Star rating */
+.star{color:#f59e0b;font-size:16px}
+.star.empty{color:#e2e8f0}
+
+/* Price bar */
+.price-bar-track{height:6px;border-radius:999px;background:#e2e8f0;position:relative;overflow:hidden}
+.price-bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#10b981,#f59e0b,#ef4444)}
+.price-marker{position:absolute;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:white;border:3px solid #059669;box-shadow:0 1px 4px rgba(0,0,0,0.2)}
+
+/* Related card */
+.rel-card{transition:all .2s;border:1.5px solid #e2e8f0;cursor:pointer}
+.rel-card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,0.09);border-color:#6ee7b7}
+
+/* Review avatar */
+.rev-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0}
+
+/* Sticky mobile bar */
+.mobile-cart-bar{display:none}
+@media(max-width:768px){
+  .desktop-cart{display:none}
+  .mobile-cart-bar{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:40;padding:12px 16px;gap:10px;background:white;box-shadow:0 -4px 20px rgba(0,0,0,0.12)}
+  .product-cols{flex-direction:column!important}
+  .gallery-col,.info-col{width:100%!important}
+}
+
+/* Escrow box */
+.escrow-box{background:linear-gradient(135deg,#ede9fe 0%,#ddd6fe 100%);border:1px solid #c4b5fd;border-radius:12px;padding:14px}
+
+/* Farmer card */
+.farmer-card{background:white;border:1.5px solid #e2e8f0;border-radius:16px;padding:20px;position:sticky;top:80px}
+
+/* Fake chart bars */
+.chart-bar{display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar-fill{width:28px;border-radius:4px 4px 0 0;background:#10b981;transition:height .3s}
+.bar-fill.high{background:#f59e0b}
+.bar-fill.low{background:#ef4444}
+
+/* Notification toast */
+.toast{position:fixed;top:80px;right:20px;z-index:100;background:white;border:1.5px solid #6ee7b7;border-radius:12px;padding:12px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.12);display:flex;align-items:center;gap:10px;animation:slideIn .3s;font-size:14px;font-weight:500}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast.hidden{display:none}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style="background:#d1fae5">
+    <svg class="w-4 h-4" style="color:#059669" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+  </div>
+  <div>
+    <p style="color:#065f46">Added to cart!</p>
+    <p class="text-xs" style="color:#64748b">2 kg Roma Tomatoes</p>
+  </div>
+  <button onclick="document.getElementById('toast').classList.add('hidden')" class="ml-4" style="color:#94a3b8">✕</button>
+</div>
+
+<!-- NAV -->
+<nav style="background:rgba(0,65,59,0.97);border-bottom:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(8px)">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
+    <a href="AgriKonnect_Homepage_Preview.html" class="flex items-center gap-2 flex-shrink-0">
+      <div class="w-7 h-7 bg-emerald-500 rounded-lg flex items-center justify-center">
+        <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945"/></svg>
+      </div>
+      <span class="text-white font-bold text-lg hidden sm:block">AgriKonnect</span>
+    </a>
+    <div class="flex-1 flex items-center bg-white rounded-lg px-3 py-2 gap-2 max-w-2xl">
+      <svg class="w-4 h-4 flex-shrink-0" style="color:#94a3b8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <input type="text" placeholder="Search produce..." class="flex-1 outline-none text-sm">
+    </div>
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <button class="relative p-2 rounded-lg hover:bg-white/10" style="color:white" onclick="document.getElementById('toast').classList.remove('hidden');setTimeout(()=>document.getElementById('toast').classList.add('hidden'),3000)">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        <span id="cart-count" class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full text-xs flex items-center justify-center font-bold" style="color:#065f46">3</span>
+      </button>
+      <button class="hidden md:block px-4 py-1.5 text-sm font-medium rounded-lg" style="background:rgba(255,255,255,0.12);color:white">Login</button>
+      <button class="px-4 py-1.5 text-sm font-medium rounded-lg" style="background:#059669;color:white">Register</button>
+    </div>
+  </div>
+</nav>
+
+<!-- TICKER -->
+<div style="background:#003330;border-bottom:1px solid rgba(255,255,255,0.1)">
+  <div class="max-w-7xl mx-auto px-4 py-2 flex items-center gap-3">
+    <span class="text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0" style="background:rgba(52,211,153,0.2);color:#34d399">LIVE</span>
+    <div class="ticker-wrap flex-1"><div class="ticker-track text-sm">
+      <span class="inline-flex items-center gap-2 mx-5"><span class="font-medium text-white">Tomatoes</span><span style="color:#34d399" class="font-bold">₵8.50/kg</span><span style="color:#34d399" class="text-xs">▲2.1%</span><span style="color:#64748b">Gtr Accra</span></span>
+      <span class="inline-flex items-center gap-2 mx-5"><span class="font-medium text-white">Maize</span><span style="color:#34d399" class="font-bold">₵4.20/kg</span><span style="color:#f87171" class="text-xs">▼0.8%</span><span style="color:#64748b">Ashanti</span></span>
+      <span class="inline-flex items-center gap-2 mx-5"><span class="font-medium text-white">Cassava</span><span style="color:#34d399" class="font-bold">₵3.80/kg</span><span style="color:#34d399" class="text-xs">▲1.5%</span><span style="color:#64748b">Eastern</span></span>
+      <span class="inline-flex items-center gap-2 mx-5"><span class="font-medium text-white">Yam</span><span style="color:#34d399" class="font-bold">₵15.00/tuber</span><span style="color:#34d399" class="text-xs">▲0.5%</span><span style="color:#64748b">Volta</span></span>
+      <span class="inline-flex items-center gap-2 mx-5"><span class="font-medium text-white">Tomatoes</span><span style="color:#34d399" class="font-bold">₵8.50/kg</span><span style="color:#34d399" class="text-xs">▲2.1%</span><span style="color:#64748b">Gtr Accra</span></span>
+      <span class="inline-flex items-center gap-2 mx-5"><span class="font-medium text-white">Maize</span><span style="color:#34d399" class="font-bold">₵4.20/kg</span><span style="color:#f87171" class="text-xs">▼0.8%</span><span style="color:#64748b">Ashanti</span></span>
+    </div></div>
+  </div>
+</div>
+
+<!-- BREADCRUMB -->
+<div style="background:white;border-bottom:1px solid #e2e8f0">
+  <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center gap-2 text-sm" style="color:#64748b">
+    <a href="AgriKonnect_Homepage_Preview.html" style="color:#059669" class="hover:underline">Home</a>
+    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    <a href="AgriKonnect_Browse_Page.html" style="color:#059669" class="hover:underline">Browse Produce</a>
+    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    <a href="#" style="color:#059669" class="hover:underline">Vegetables</a>
+    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    <span style="color:#1e293b;font-weight:500">Roma Tomatoes</span>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="max-w-7xl mx-auto px-4 py-6">
+  <div class="flex gap-6 product-cols">
+
+    <!-- LEFT: Gallery -->
+    <div class="gallery-col" style="width:420px;flex-shrink:0">
+      <!-- Main image -->
+      <div class="relative bg-white rounded-2xl overflow-hidden mb-3" style="border:1.5px solid #e2e8f0">
+        <div class="relative" style="height:340px">
+          <img id="main-img" src="https://images.unsplash.com/photo-1546793665-c74683f339c1?w=800&h=600&fit=crop" alt="Roma Tomatoes" class="main-img w-full h-full object-cover">
+          <!-- Badges overlay -->
+          <div class="absolute top-3 left-3 flex flex-col gap-2">
+            <span class="badge-hot text-xs font-bold px-2.5 py-1 rounded-full">🔥 Hot Deal</span>
+            <span class="badge-fresh text-xs font-medium px-2.5 py-1 rounded-full">✅ Available Now</span>
+          </div>
+          <!-- Wishlist -->
+          <button class="absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow flex items-center justify-center" id="wishlist-btn" onclick="toggleWishlist()" style="color:#94a3b8">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="heart-icon"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+          </button>
+          <!-- Share -->
+          <button class="absolute bottom-3 right-3 w-9 h-9 bg-white/90 rounded-full shadow flex items-center justify-center" style="color:#475569">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+          </button>
+        </div>
+      </div>
+      <!-- Thumbnails -->
+      <div class="flex gap-2">
+        <div class="thumb active flex-1" onclick="setImg(this,'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=800&h=600&fit=crop')" style="height:72px">
+          <img src="https://images.unsplash.com/photo-1546793665-c74683f339c1?w=200&h=150&fit=crop" class="w-full h-full object-cover" alt="">
+        </div>
+        <div class="thumb flex-1" onclick="setImg(this,'https://images.unsplash.com/photo-1592921870789-04563d55041c?w=800&h=600&fit=crop')" style="height:72px">
+          <img src="https://images.unsplash.com/photo-1592921870789-04563d55041c?w=200&h=150&fit=crop" class="w-full h-full object-cover" alt="">
+        </div>
+        <div class="thumb flex-1" onclick="setImg(this,'https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=800&h=600&fit=crop')" style="height:72px">
+          <img src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=200&h=150&fit=crop" class="w-full h-full object-cover" alt="">
+        </div>
+        <div class="thumb flex-1" onclick="setImg(this,'https://images.unsplash.com/photo-1587486913049-53fc88980cfc?w=800&h=600&fit=crop')" style="height:72px">
+          <img src="https://images.unsplash.com/photo-1587486913049-53fc88980cfc?w=200&h=150&fit=crop" class="w-full h-full object-cover" alt="">
+        </div>
+      </div>
+
+      <!-- FARMER CARD (desktop below gallery) -->
+      <div class="farmer-card mt-4">
+        <div class="flex items-start gap-3 mb-4">
+          <div class="w-14 h-14 rounded-full overflow-hidden flex-shrink-0" style="border:2px solid #6ee7b7">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face" class="w-full h-full object-cover" alt="Kofi Mensah">
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-sm" style="color:#0f172a">Kofi Mensah</h3>
+              <span class="badge-verified text-xs px-2 py-0.5 rounded-full">✓ Verified</span>
+            </div>
+            <p class="text-xs" style="color:#64748b">Mensah Family Farm · Kumasi, Ashanti</p>
+            <div class="flex items-center gap-1 mt-0.5">
+              <span style="color:#f59e0b" class="text-xs">★★★★★</span>
+              <span class="text-xs font-semibold">4.9</span>
+              <span class="text-xs" style="color:#64748b">(84 reviews)</span>
+            </div>
+          </div>
+        </div>
+        <!-- Farmer stats -->
+        <div class="grid grid-cols-3 gap-2 mb-4 text-center">
+          <div class="rounded-lg p-2" style="background:#f8fafc">
+            <p class="font-bold text-sm" style="color:#059669">156</p>
+            <p class="text-xs" style="color:#64748b">Orders</p>
+          </div>
+          <div class="rounded-lg p-2" style="background:#f8fafc">
+            <p class="font-bold text-sm" style="color:#059669">98%</p>
+            <p class="text-xs" style="color:#64748b">On Time</p>
+          </div>
+          <div class="rounded-lg p-2" style="background:#f8fafc">
+            <p class="font-bold text-sm" style="color:#059669">2h</p>
+            <p class="text-xs" style="color:#64748b">Response</p>
+          </div>
+        </div>
+        <p class="text-xs mb-3 leading-relaxed" style="color:#64748b">Farming tomatoes and vegetables for 12 years in Kumasi. All produce is grown using organic methods. Available for bulk orders.</p>
+        <div class="flex gap-2">
+          <a href="#" class="flex-1 py-2 rounded-lg text-xs font-semibold text-center" style="background:#f0fdf4;color:#059669;border:1px solid #6ee7b7">View Farm</a>
+          <button class="flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1" style="background:#f8fafc;color:#475569;border:1px solid #e2e8f0">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            Message
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Product Info -->
+    <div class="info-col flex-1">
+
+      <!-- Category + title -->
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-xs font-medium px-2 py-1 rounded-full" style="background:#f0fdf4;color:#059669;border:1px solid #6ee7b7">Vegetables</span>
+        <span class="text-xs" style="color:#94a3b8">SKU: AK-TOM-2024-001</span>
+      </div>
+      <h1 class="font-bold mb-1" style="font-size:26px;color:#0f172a">Roma Tomatoes</h1>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="flex items-center gap-1">
+          <span style="color:#f59e0b">★★★★★</span>
+          <span class="font-semibold text-sm">4.9</span>
+          <span class="text-sm" style="color:#64748b">(84 reviews)</span>
+        </div>
+        <span style="color:#e2e8f0">|</span>
+        <span class="text-sm" style="color:#059669">156 sold this week</span>
+        <span style="color:#e2e8f0">|</span>
+        <span class="text-sm" style="color:#64748b">48 kg left</span>
+      </div>
+
+      <!-- PRICE INTELLIGENCE -->
+      <div class="rounded-xl p-4 mb-4" style="background:#f8fafc;border:1.5px solid #e2e8f0">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-semibold text-sm" style="color:#0f172a">📊 Price Intelligence</h3>
+          <button class="text-xs font-medium" style="color:#059669">View history →</button>
+        </div>
+        <div class="flex items-end gap-4 mb-3">
+          <div>
+            <p class="text-xs" style="color:#64748b">This listing</p>
+            <p class="font-bold" style="font-size:28px;color:#059669">₵7.20<span class="text-base font-normal" style="color:#94a3b8">/kg</span></p>
+          </div>
+          <div class="mb-1">
+            <span class="badge-hot text-sm font-bold px-3 py-1.5 rounded-full">🔥 15% below market</span>
+          </div>
+        </div>
+        <!-- Price spectrum bar -->
+        <div class="mb-2">
+          <div class="flex justify-between text-xs mb-1" style="color:#64748b">
+            <span>Lowest ₵6.00</span>
+            <span>Market avg ₵8.50</span>
+            <span>Highest ₵11.00</span>
+          </div>
+          <div class="price-bar-track">
+            <div class="price-bar-fill" style="width:100%"></div>
+            <div class="price-marker" style="left:24%" title="This listing: ₵7.20"></div>
+          </div>
+          <p class="text-xs mt-1 text-center" style="color:#059669;font-weight:500">This farmer's price is in the best 25% across all Ashanti listings</p>
+        </div>
+        <!-- Price breakdown -->
+        <div class="grid grid-cols-3 gap-2 mt-3">
+          <div class="text-center rounded-lg p-2" style="background:white;border:1px solid #e2e8f0">
+            <p class="font-bold text-sm" style="color:#10b981">₵6.00</p>
+            <p class="text-xs" style="color:#64748b">Lowest</p>
+          </div>
+          <div class="text-center rounded-lg p-2" style="background:#fef3c7;border:1px solid #fcd34d">
+            <p class="font-bold text-sm" style="color:#92400e">₵7.20</p>
+            <p class="text-xs" style="color:#92400e">This listing</p>
+          </div>
+          <div class="text-center rounded-lg p-2" style="background:white;border:1px solid #e2e8f0">
+            <p class="font-bold text-sm" style="color:#94a3b8">₵8.50</p>
+            <p class="text-xs" style="color:#64748b">Avg</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Harvest Window -->
+      <div class="flex items-center gap-3 rounded-xl p-3 mb-4" style="background:#f0fdf4;border:1px solid #6ee7b7">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background:#d1fae5">
+          <svg class="w-5 h-5" style="color:#059669" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        </div>
+        <div class="flex-1">
+          <p class="font-semibold text-sm" style="color:#065f46">✅ Available Now — Freshly Harvested</p>
+          <p class="text-xs" style="color:#059669">Harvested Apr 8, 2026 · 2 days ago · Next harvest: May 2026</p>
+        </div>
+        <span class="badge-fresh text-xs font-bold px-2 py-1 rounded-full">FRESH</span>
+      </div>
+
+      <!-- Qty + Add to Cart (desktop) -->
+      <div class="desktop-cart mb-4">
+        <div class="flex items-center gap-4 mb-3">
+          <label class="text-sm font-semibold" style="color:#374151">Quantity</label>
+          <div class="flex items-center gap-2">
+            <button class="qty-btn" onclick="changeQty(-1)">−</button>
+            <span id="qty" class="w-12 text-center font-bold text-lg" style="color:#0f172a">2</span>
+            <button class="qty-btn" onclick="changeQty(1)">+</button>
+          </div>
+          <span class="text-sm" style="color:#64748b">Min. order: 2 kg</span>
+        </div>
+        <div class="flex items-center justify-between mb-3 p-3 rounded-xl" style="background:#f8fafc;border:1px solid #e2e8f0">
+          <span class="text-sm" style="color:#64748b">Subtotal (2 kg)</span>
+          <span class="font-bold text-lg" style="color:#0f172a">₵14.40</span>
+        </div>
+        <div class="flex gap-3 mb-3">
+          <button onclick="addToCart()" class="flex-1 py-3 rounded-xl font-semibold text-white flex items-center justify-center gap-2" style="background:#059669;font-size:15px">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            Add to Cart
+          </button>
+          <button class="px-5 py-3 rounded-xl font-semibold border" style="border-color:#e2e8f0;color:#475569">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+          </button>
+        </div>
+        <button class="w-full py-3 rounded-xl font-semibold border text-sm" style="border-color:#059669;color:#059669">
+          💬 Negotiate Price
+        </button>
+      </div>
+
+      <!-- Escrow Box -->
+      <div class="escrow-box mb-4">
+        <div class="flex items-center gap-2 mb-2">
+          <svg class="w-5 h-5 flex-shrink-0" style="color:#7c3aed" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          <h4 class="font-bold text-sm" style="color:#4c1d95">🔒 Escrow Protected Purchase</h4>
+        </div>
+        <p class="text-xs leading-relaxed" style="color:#5b21b6">Your payment is held securely until you confirm you've received your order in good condition. Pay via <strong>MTN MoMo, Vodafone Cash, AirtelTigo</strong>, or bank transfer. Money only releases to the farmer after your confirmation.</p>
+        <div class="flex gap-4 mt-2">
+          <div class="flex items-center gap-1 text-xs" style="color:#5b21b6">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Money-back guarantee
+          </div>
+          <div class="flex items-center gap-1 text-xs" style="color:#5b21b6">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Dispute protection
+          </div>
+          <div class="flex items-center gap-1 text-xs" style="color:#5b21b6">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Verified farmer
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick specs -->
+      <div class="grid grid-cols-2 gap-2 mb-4">
+        <div class="flex items-center gap-2 p-3 rounded-xl" style="background:white;border:1.5px solid #e2e8f0">
+          <svg class="w-4 h-4 flex-shrink-0" style="color:#059669" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          <div>
+            <p class="text-xs font-semibold" style="color:#0f172a">Min. Order</p>
+            <p class="text-xs" style="color:#64748b">2 kg</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 p-3 rounded-xl" style="background:white;border:1.5px solid #e2e8f0">
+          <svg class="w-4 h-4 flex-shrink-0" style="color:#059669" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+          <div>
+            <p class="text-xs font-semibold" style="color:#0f172a">Location</p>
+            <p class="text-xs" style="color:#64748b">Kumasi, Ashanti</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 p-3 rounded-xl" style="background:white;border:1.5px solid #e2e8f0">
+          <svg class="w-4 h-4 flex-shrink-0" style="color:#059669" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+          <div>
+            <p class="text-xs font-semibold" style="color:#0f172a">Stock</p>
+            <p class="text-xs" style="color:#64748b">48 kg available</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 p-3 rounded-xl" style="background:white;border:1.5px solid #e2e8f0">
+          <svg class="w-4 h-4 flex-shrink-0" style="color:#059669" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+          <div>
+            <p class="text-xs font-semibold" style="color:#0f172a">Delivery</p>
+            <p class="text-xs" style="color:#64748b">Pickup or arrange</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- end info col -->
+  </div>
+  <!-- end main cols -->
+
+  <!-- TABS -->
+  <div class="mt-8 bg-white rounded-2xl" style="border:1.5px solid #e2e8f0">
+    <div class="flex border-b" style="border-color:#e2e8f0">
+      <button class="tab active" onclick="switchTab(this,'desc')">Description</button>
+      <button class="tab" onclick="switchTab(this,'reviews')">Reviews (84)</button>
+      <button class="tab" onclick="switchTab(this,'price-hist')">Price History</button>
+      <button class="tab" onclick="switchTab(this,'shipping')">Delivery Info</button>
+    </div>
+
+    <!-- Description tab -->
+    <div id="tab-desc" class="tab-panel active p-6">
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="font-bold mb-3" style="color:#0f172a">About this Product</h3>
+          <p class="text-sm leading-relaxed mb-4" style="color:#475569">These premium Roma Tomatoes are grown on Mensah Family Farm in Kumasi, Ashanti Region. Picked at peak ripeness for maximum flavour and shelf life. Ideal for cooking, processing, and fresh markets.</p>
+          <p class="text-sm leading-relaxed" style="color:#475569">Kofi Mensah has been farming tomatoes in Kumasi for over 12 years using low-input, sustainable methods. No banned pesticides. All produce is handled with care post-harvest.</p>
+        </div>
+        <div>
+          <h3 class="font-bold mb-3" style="color:#0f172a">Product Details</h3>
+          <table class="w-full text-sm">
+            <tr style="border-bottom:1px solid #f1f5f9">
+              <td class="py-2" style="color:#64748b">Category</td>
+              <td class="py-2 font-medium">Vegetables</td>
+            </tr>
+            <tr style="border-bottom:1px solid #f1f5f9">
+              <td class="py-2" style="color:#64748b">Variety</td>
+              <td class="py-2 font-medium">Roma / Plum</td>
+            </tr>
+            <tr style="border-bottom:1px solid #f1f5f9">
+              <td class="py-2" style="color:#64748b">Grade</td>
+              <td class="py-2 font-medium">Grade A — Export Quality</td>
+            </tr>
+            <tr style="border-bottom:1px solid #f1f5f9">
+              <td class="py-2" style="color:#64748b">Harvest Date</td>
+              <td class="py-2 font-medium">April 8, 2026</td>
+            </tr>
+            <tr style="border-bottom:1px solid #f1f5f9">
+              <td class="py-2" style="color:#64748b">Packaging</td>
+              <td class="py-2 font-medium">Open sack / crate</td>
+            </tr>
+            <tr>
+              <td class="py-2" style="color:#64748b">Shelf Life</td>
+              <td class="py-2 font-medium">7–10 days at ambient temp</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reviews tab -->
+    <div id="tab-reviews" class="tab-panel p-6">
+      <!-- Rating summary -->
+      <div class="flex gap-8 mb-6 pb-6" style="border-bottom:1px solid #f1f5f9">
+        <div class="text-center">
+          <p style="font-size:52px;font-weight:800;color:#0f172a;line-height:1">4.9</p>
+          <div class="flex justify-center my-1"><span style="color:#f59e0b;font-size:20px">★★★★★</span></div>
+          <p class="text-sm" style="color:#64748b">84 reviews</p>
+        </div>
+        <div class="flex-1">
+          <div class="space-y-1.5">
+            <div class="flex items-center gap-2 text-sm">
+              <span style="color:#64748b;width:20px">5★</span>
+              <div class="flex-1 h-2 rounded-full" style="background:#e2e8f0">
+                <div class="h-full rounded-full" style="width:85%;background:#f59e0b"></div>
+              </div>
+              <span style="color:#64748b;width:24px">71</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <span style="color:#64748b;width:20px">4★</span>
+              <div class="flex-1 h-2 rounded-full" style="background:#e2e8f0">
+                <div class="h-full rounded-full" style="width:12%;background:#f59e0b"></div>
+              </div>
+              <span style="color:#64748b;width:24px">10</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <span style="color:#64748b;width:20px">3★</span>
+              <div class="flex-1 h-2 rounded-full" style="background:#e2e8f0">
+                <div class="h-full rounded-full" style="width:2%;background:#f59e0b"></div>
+              </div>
+              <span style="color:#64748b;width:24px">2</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <span style="color:#64748b;width:20px">2★</span>
+              <div class="flex-1 h-2 rounded-full" style="background:#e2e8f0">
+                <div class="h-full rounded-full" style="width:1%;background:#f59e0b"></div>
+              </div>
+              <span style="color:#64748b;width:24px">1</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <span style="color:#64748b;width:20px">1★</span>
+              <div class="flex-1 h-2 rounded-full" style="background:#e2e8f0">
+                <div class="h-full rounded-full" style="width:0%;background:#f59e0b"></div>
+              </div>
+              <span style="color:#64748b;width:24px">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Individual reviews -->
+      <div class="space-y-5">
+        <div class="flex gap-3">
+          <div class="rev-avatar" style="background:#d1fae5;color:#065f46">AK</div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <p class="font-semibold text-sm">Abena Kyei</p>
+              <span class="text-xs" style="color:#94a3b8">3 days ago</span>
+            </div>
+            <div class="flex items-center gap-1 mb-1"><span style="color:#f59e0b;font-size:13px">★★★★★</span></div>
+            <p class="text-sm" style="color:#475569">Excellent tomatoes! Very fresh, arrived same day. Kofi packed them carefully. The price was the best I found on the platform. Will order again.</p>
+            <div class="flex items-center gap-4 mt-2">
+              <span class="text-xs px-2 py-0.5 rounded-full" style="background:#f0fdf4;color:#059669">Verified Purchase</span>
+              <button class="text-xs" style="color:#94a3b8">👍 Helpful (12)</button>
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="rev-avatar" style="background:#dbeafe;color:#1e40af">KA</div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <p class="font-semibold text-sm">Kwame Asante</p>
+              <span class="text-xs" style="color:#94a3b8">1 week ago</span>
+            </div>
+            <div class="flex items-center gap-1 mb-1"><span style="color:#f59e0b;font-size:13px">★★★★★</span></div>
+            <p class="text-sm" style="color:#475569">I run a restaurant and have been buying from Kofi for 2 months. Consistently good quality. The escrow payment gives me peace of mind. Highly recommended.</p>
+            <div class="flex items-center gap-4 mt-2">
+              <span class="text-xs px-2 py-0.5 rounded-full" style="background:#f0fdf4;color:#059669">Verified Purchase</span>
+              <button class="text-xs" style="color:#94a3b8">👍 Helpful (8)</button>
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="rev-avatar" style="background:#fef3c7;color:#92400e">EO</div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <p class="font-semibold text-sm">Efua Owusu</p>
+              <span class="text-xs" style="color:#94a3b8">2 weeks ago</span>
+            </div>
+            <div class="flex items-center gap-1 mb-1"><span style="color:#f59e0b;font-size:13px">★★★★☆</span></div>
+            <p class="text-sm" style="color:#475569">Good tomatoes and fair price. Delivery coordination took a bit of back and forth but Kofi was responsive. Overall happy with the purchase.</p>
+            <div class="flex items-center gap-4 mt-2">
+              <span class="text-xs px-2 py-0.5 rounded-full" style="background:#f0fdf4;color:#059669">Verified Purchase</span>
+              <button class="text-xs" style="color:#94a3b8">👍 Helpful (4)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Price History tab -->
+    <div id="tab-price-hist" class="tab-panel p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold" style="color:#0f172a">Tomatoes Price Trend — Ashanti Region</h3>
+        <div class="flex gap-2">
+          <button class="px-3 py-1 rounded-lg text-xs font-medium" style="background:#059669;color:white">30 days</button>
+          <button class="px-3 py-1 rounded-lg text-xs font-medium" style="background:#f1f5f9;color:#64748b">90 days</button>
+          <button class="px-3 py-1 rounded-lg text-xs font-medium" style="background:#f1f5f9;color:#64748b">1 year</button>
+        </div>
+      </div>
+      <!-- Fake bar chart -->
+      <div class="flex items-end gap-2 mb-2" style="height:140px">
+        <div class="chart-bar flex-1"><div class="bar-fill" style="height:70px"></div><span class="text-xs" style="color:#94a3b8">Mar 12</span></div>
+        <div class="chart-bar flex-1"><div class="bar-fill" style="height:85px"></div><span class="text-xs" style="color:#94a3b8">Mar 15</span></div>
+        <div class="chart-bar flex-1"><div class="bar-fill high" style="height:110px"></div><span class="text-xs" style="color:#94a3b8">Mar 18</span></div>
+        <div class="chart-bar flex-1"><div class="bar-fill high" style="height:120px"></div><span class="text-xs" style="color:#94a3b8">Mar 21</span></div>
+        <div class="chart-bar flex-1"><div class="bar-fill high" style="height:130px"></div><span class="text-xs" style="color:#94a3b8">Mar 24</span></div>
+        <div class="chart-bar flex-1"><div class="bar-fill" style="height:95px"></div><span class="text-xs" style="color:#94a3b8">Mar 27</span></div>
+        <div class="chart-bar flex-1"><div class="bar-fill" style="height:80px"></div><span class="text-xs" style="color:#94a3b8">Mar 30</span></div>
+        <div class="chart-bar flex-1"><div class="bar-fill low" style="height:60px"></div><span class="text-xs" style="color:#94a3b8">Apr 2</span></div>
+        <div class="chart-bar flex-1"><div class="bar-fill" style="height:72px"></div><span class="text-xs" style="color:#94a3b8">Apr 5</span></div>
+        <div class="chart-bar flex-1"><div class="bar-fill" style="height:75px" style="background:#f59e0b"></div><span class="text-xs font-bold" style="color:#059669">Today</span></div>
+      </div>
+      <div class="flex gap-4 mt-3">
+        <div class="flex items-center gap-1.5 text-xs"><div class="w-3 h-3 rounded" style="background:#10b981"></div>Normal</div>
+        <div class="flex items-center gap-1.5 text-xs"><div class="w-3 h-3 rounded" style="background:#f59e0b"></div>High season</div>
+        <div class="flex items-center gap-1.5 text-xs"><div class="w-3 h-3 rounded" style="background:#ef4444"></div>Low supply</div>
+      </div>
+      <div class="mt-4 p-3 rounded-xl text-sm" style="background:#f0fdf4;border:1px solid #6ee7b7;color:#065f46">
+        💡 <strong>Insight:</strong> Tomato prices in Ashanti peaked at ₵12/kg in late March (rainy season pressure). Current price ₵7.20 is a good time to buy or stock up.
+      </div>
+    </div>
+
+    <!-- Delivery tab -->
+    <div id="tab-shipping" class="tab-panel p-6">
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="font-bold mb-3" style="color:#0f172a">Delivery Options</h3>
+          <div class="space-y-3">
+            <div class="flex gap-3 p-3 rounded-xl" style="border:1.5px solid #e2e8f0">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background:#f0fdf4">
+                <svg class="w-5 h-5" style="color:#059669" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+              </div>
+              <div>
+                <p class="font-semibold text-sm">Farm Pickup — Free</p>
+                <p class="text-xs" style="color:#64748b">Collect from Mensah Farm, Kumasi. Coordinate with farmer via message.</p>
+              </div>
+            </div>
+            <div class="flex gap-3 p-3 rounded-xl" style="border:1.5px solid #e2e8f0">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background:#f0fdf4">
+                <svg class="w-5 h-5" style="color:#059669" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m-4 6H4m0 0l4 4m-4-4l4-4"/></svg>
+              </div>
+              <div>
+                <p class="font-semibold text-sm">Arrange Own Logistics</p>
+                <p class="text-xs" style="color:#64748b">Farmer can assist connecting you with local transport. Cost varies by distance.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 class="font-bold mb-3" style="color:#0f172a">Payment & Escrow</h3>
+          <div class="space-y-2 text-sm" style="color:#475569">
+            <div class="flex items-center gap-2"><span style="color:#059669">✓</span> Pay via MTN MoMo, Vodafone Cash, AirtelTigo</div>
+            <div class="flex items-center gap-2"><span style="color:#059669">✓</span> Funds held in escrow until delivery confirmed</div>
+            <div class="flex items-center gap-2"><span style="color:#059669">✓</span> 48-hour window to raise a dispute after delivery</div>
+            <div class="flex items-center gap-2"><span style="color:#059669">✓</span> Full refund if product not as described</div>
+            <div class="flex items-center gap-2"><span style="color:#059669">✓</span> AgriKonnect mediation available for disputes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!-- end tabs -->
+
+  <!-- RELATED PRODUCTS -->
+  <div class="mt-8">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-bold text-lg" style="color:#0f172a">More from Kofi Mensah's Farm</h2>
+      <a href="AgriKonnect_Browse_Page.html" style="color:#059669" class="text-sm font-medium hover:underline">View all →</a>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="rel-card bg-white rounded-xl overflow-hidden">
+        <div style="height:140px;overflow:hidden">
+          <img src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=400&h=300&fit=crop" class="w-full h-full object-cover" alt="Pepper">
+        </div>
+        <div class="p-3">
+          <p class="font-semibold text-sm mb-1">Scotch Bonnet</p>
+          <p class="font-bold" style="color:#059669">₵22.00<span class="text-xs font-normal" style="color:#94a3b8">/kg</span></p>
+          <button class="w-full mt-2 py-1.5 rounded-lg text-xs font-semibold" style="background:#f0fdf4;color:#059669;border:1px solid #6ee7b7">Add to Cart</button>
+        </div>
+      </div>
+      <div class="rel-card bg-white rounded-xl overflow-hidden">
+        <div style="height:140px;overflow:hidden">
+          <img src="https://images.unsplash.com/photo-1518977676405-c12a9dd6e8a0?w=400&h=300&fit=crop" class="w-full h-full object-cover" alt="Onion">
+        </div>
+        <div class="p-3">
+          <p class="font-semibold text-sm mb-1">Red Onions</p>
+          <p class="font-bold" style="color:#059669">₵5.20<span class="text-xs font-normal" style="color:#94a3b8">/kg</span></p>
+          <button class="w-full mt-2 py-1.5 rounded-lg text-xs font-semibold" style="background:#f0fdf4;color:#059669;border:1px solid #6ee7b7">Add to Cart</button>
+        </div>
+      </div>
+      <div class="rel-card bg-white rounded-xl overflow-hidden">
+        <div style="height:140px;overflow:hidden">
+          <img src="https://images.unsplash.com/photo-1587486913049-53fc88980cfc?w=400&h=300&fit=crop" class="w-full h-full object-cover" alt="Carrot">
+        </div>
+        <div class="p-3">
+          <p class="font-semibold text-sm mb-1">Fresh Carrots</p>
+          <p class="font-bold" style="color:#059669">₵6.80<span class="text-xs font-normal" style="color:#94a3b8">/kg</span></p>
+          <button class="w-full mt-2 py-1.5 rounded-lg text-xs font-semibold" style="background:#f0fdf4;color:#059669;border:1px solid #6ee7b7">Add to Cart</button>
+        </div>
+      </div>
+      <div class="rel-card bg-white rounded-xl overflow-hidden">
+        <div style="height:140px;overflow:hidden">
+          <img src="https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?w=400&h=300&fit=crop" class="w-full h-full object-cover" alt="Cassava">
+        </div>
+        <div class="p-3">
+          <p class="font-semibold text-sm mb-1">Fresh Cassava</p>
+          <p class="font-bold" style="color:#059669">₵3.80<span class="text-xs font-normal" style="color:#94a3b8">/kg</span></p>
+          <button class="w-full mt-2 py-1.5 rounded-lg text-xs font-semibold" style="background:#f0fdf4;color:#059669;border:1px solid #6ee7b7">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<!-- end main -->
+
+<!-- MOBILE STICKY CART BAR -->
+<div class="mobile-cart-bar">
+  <div class="flex-1">
+    <p class="text-xs" style="color:#64748b">2 kg · ₵14.40 total</p>
+    <p class="font-bold text-sm" style="color:#0f172a">Roma Tomatoes</p>
+  </div>
+  <button onclick="addToCart()" class="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-white" style="background:#059669">
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4"/></svg>
+    Add to Cart
+  </button>
+</div>
+
+<!-- FOOTER -->
+<footer class="mt-12 py-6" style="background:#00413b;border-top:1px solid rgba(255,255,255,0.1)">
+  <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-sm" style="color:#94a3b8">
+    <p>© 2026 AgriKonnect — All Rights Reserved</p>
+    <div class="flex gap-6">
+      <a href="#" class="hover:text-white">Terms</a>
+      <a href="#" class="hover:text-white">Privacy</a>
+      <a href="#" class="hover:text-white">Support</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+let qty = 2;
+function changeQty(d) {
+  qty = Math.max(2, qty + d);
+  document.getElementById('qty').textContent = qty;
+}
+function setImg(el, src) {
+  document.getElementById('main-img').src = src;
+  document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+function switchTab(btn, id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+}
+function toggleWishlist() {
+  const icon = document.getElementById('heart-icon');
+  const btn = document.getElementById('wishlist-btn');
+  if(icon.getAttribute('fill') === 'none') {
+    icon.setAttribute('fill', '#f43f5e');
+    icon.setAttribute('stroke', '#f43f5e');
+    btn.style.color = '#f43f5e';
+  } else {
+    icon.setAttribute('fill', 'none');
+    icon.setAttribute('stroke', 'currentColor');
+    btn.style.color = '#94a3b8';
+  }
+}
+function addToCart() {
+  const count = document.getElementById('cart-count');
+  count.textContent = parseInt(count.textContent) + 1;
+  const toast = document.getElementById('toast');
+  toast.classList.remove('hidden');
+  setTimeout(() => toast.classList.add('hidden'), 3000);
+}
+</script>
+
+<!-- DEMO NAVIGATION -->
+<div id="demoNav" style="position:fixed;bottom:20px;right:20px;z-index:9999;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <button onclick="document.getElementById('demoMenu').style.display=document.getElementById('demoMenu').style.display==='none'?'block':'none'" 
+    style="width:52px;height:52px;border-radius:50%;background:#00413b;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,65,59,0.4);display:flex;align-items:center;justify-content:center">
+    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <div id="demoMenu" style="display:none;position:absolute;bottom:60px;right:0;background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);border:1.5px solid #e2e8f0;min-width:220px;overflow:hidden">
+    <div style="background:#00413b;padding:10px 14px">
+      <p style="color:#34d399;font-size:10px;font-weight:700;letter-spacing:.05em;margin:0">AGRIKONNECT DEMO</p>
+      <p style="color:rgba(255,255,255,0.7);font-size:11px;margin:2px 0 0">Jump to any page</p>
+    </div>
+    <div style="padding:6px">
+      <a href="index.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🏠 Homepage</a>
+      <a href="AgriKonnect_Auth.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🔐 Login / Register</a>
+      <a href="AgriKonnect_Browse_Page.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🛒 Browse Produce</a>
+      <a href="AgriKonnect_Product_Detail.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🍅 Product Detail</a>
+      <a href="AgriKonnect_Cart_Checkout.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">💳 Cart + Checkout</a>
+      <div style="height:1px;background:#f1f5f9;margin:4px 6px"></div>
+      <a href="AgriKonnect_Farmer_Dashboard.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">🌾 Farmer Dashboard</a>
+      <a href="AgriKonnect_Buyer_Dashboard.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📦 Buyer Dashboard</a>
+      <div style="height:1px;background:#f1f5f9;margin:4px 6px"></div>
+      <a href="AgriKonnect_Price_Intelligence.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📊 Price Intelligence</a>
+      <a href="AgriKonnect_Post_Request.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:#374151;font-size:13px;font-weight:600" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">📋 Post a Request</a>
+    </div>
+  </div>
+</div>
+<!-- END DEMO NAVIGATION -->
+</body>
+</html>
