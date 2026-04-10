@@ -52,27 +52,11 @@
   .line-path.animate { stroke-dashoffset: 0; }
   .moving-ball {
     fill: #34d399;
-    opacity: 0;
-    offset-rotate: 0deg;
+    filter: drop-shadow(0 0 5px rgba(52,211,153,0.9));
   }
-  .moving-ball.show {
-    animation: travel-up 2s ease-in-out infinite;
-  }
-  .moving-ball.ball-down {
-    animation: travel-down 2s ease-in-out infinite;
-    fill: rgba(52,211,153,0.5);
-  }
-  @keyframes travel-up {
-    0% { opacity: 0; offset-distance: 100%; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { offset-distance: 0%; opacity: 0; }
-  }
-  @keyframes travel-down {
-    0% { opacity: 0; offset-distance: 0%; }
-    10% { opacity: 0.6; }
-    90% { opacity: 0.6; }
-    100% { offset-distance: 100%; opacity: 0; }
+  .moving-ball-dim {
+    fill: rgba(52,211,153,0.45);
+    filter: drop-shadow(0 0 3px rgba(52,211,153,0.5));
   }
 
   /* Product card hover */
@@ -674,9 +658,23 @@ function initAnimation() {
   if (!hero || !svg || !searchBox || !catCards.length) return;
 
   svg.innerHTML = '';
+
+  // Add glow filter defs
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  defs.innerHTML = `
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <filter id="glow-dim" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  `;
+  svg.appendChild(defs);
+
   const heroRect = hero.getBoundingClientRect();
   const searchRect = searchBox.getBoundingClientRect();
-
   const searchCX = searchRect.left - heroRect.left + searchRect.width / 2;
   const searchCY = searchRect.top - heroRect.top + 20;
 
@@ -687,40 +685,64 @@ function initAnimation() {
     const ctrlX = (searchCX + cardX) / 2;
     const ctrlY = searchCY + (cardY - searchCY) * 0.3;
     const d = `M ${cardX} ${cardY} Q ${ctrlX} ${ctrlY} ${searchCX} ${searchCY}`;
-    const delay = idx * 0.2;
+    const pathId = `anim-path-${idx}`;
+    const delay = idx * 0.25;
+    const dur = 2.8 + (idx % 3) * 0.4; // slight variation per path
 
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', d);
-    path.setAttribute('class', 'line-path');
-    path.style.animationDelay = `${delay}s`;
-    g.appendChild(path);
+    // ── Draw the line path ──
+    const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    pathEl.setAttribute('id', pathId);
+    pathEl.setAttribute('d', d);
+    pathEl.setAttribute('class', 'line-path');
+    pathEl.style.animationDelay = `${delay}s`;
+    g.appendChild(pathEl);
 
-    // Ball going up
+    // ── Ball travelling card → search (bright) ──
     const b1 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    b1.setAttribute('r', '5');
+    b1.setAttribute('r', '5.5');
     b1.setAttribute('class', 'moving-ball');
-    b1.style.offsetPath = `path("${d}")`;
-    b1.style.animationDelay = `${delay + 0.5}s`;
+    b1.setAttribute('filter', 'url(#glow)');
+    const am1 = document.createElementNS('http://www.w3.org/2000/svg', 'animateMotion');
+    am1.setAttribute('dur', `${dur}s`);
+    am1.setAttribute('begin', `${delay}s`);
+    am1.setAttribute('repeatCount', 'indefinite');
+    am1.setAttribute('calcMode', 'spline');
+    am1.setAttribute('keyTimes', '0;1');
+    am1.setAttribute('keySplines', '0.4 0 0.6 1');
+    am1.setAttribute('keyPoints', '0;1');
+    am1.setAttribute('rotate', 'auto');
+    const mp1 = document.createElementNS('http://www.w3.org/2000/svg', 'mpath');
+    mp1.setAttributeNS('http://www.w3.org/1999/xlink', 'href', `#${pathId}`);
+    am1.appendChild(mp1);
+    b1.appendChild(am1);
     g.appendChild(b1);
 
-    // Ball going down
+    // ── Ball travelling search → card (dim, reverse) ──
     const b2 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    b2.setAttribute('r', '5');
-    b2.setAttribute('class', 'moving-ball ball-down');
-    b2.style.offsetPath = `path("${d}")`;
-    b2.style.animationDelay = `${delay + 2.5}s`;
+    b2.setAttribute('r', '4');
+    b2.setAttribute('class', 'moving-ball-dim');
+    b2.setAttribute('filter', 'url(#glow-dim)');
+    const am2 = document.createElementNS('http://www.w3.org/2000/svg', 'animateMotion');
+    am2.setAttribute('dur', `${dur * 1.1}s`);
+    am2.setAttribute('begin', `${delay + dur * 0.5}s`);
+    am2.setAttribute('repeatCount', 'indefinite');
+    am2.setAttribute('calcMode', 'spline');
+    am2.setAttribute('keyTimes', '0;1');
+    am2.setAttribute('keySplines', '0.4 0 0.6 1');
+    am2.setAttribute('keyPoints', '1;0');  // reverse direction
+    am2.setAttribute('rotate', 'auto');
+    const mp2 = document.createElementNS('http://www.w3.org/2000/svg', 'mpath');
+    mp2.setAttributeNS('http://www.w3.org/1999/xlink', 'href', `#${pathId}`);
+    am2.appendChild(mp2);
+    b2.appendChild(am2);
     g.appendChild(b2);
 
     svg.appendChild(g);
 
-    // Trigger animation
-    setTimeout(() => {
-      path.classList.add('animate');
-      b1.classList.add('show');
-      b2.classList.add('show');
-    }, 100 + delay * 1000);
+    // Trigger line draw animation after slight delay
+    setTimeout(() => pathEl.classList.add('animate'), 50 + delay * 800);
   });
 }
 
