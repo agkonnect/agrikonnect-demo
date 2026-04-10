@@ -39,6 +39,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;m
 </style>
 </head>
 <body>
+<!-- DEMO USER BANNER -->
+<div id="demoBanner" style="background:linear-gradient(90deg,#1e3a5f,#1e4d8c);padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <span style="color:rgba(255,255,255,0.7);font-size:11px;font-weight:700;letter-spacing:.05em">🎭 DEMO MODE</span>
+  <span style="color:rgba(255,255,255,0.3);font-size:12px">|</span>
+  <span style="color:rgba(255,255,255,0.6);font-size:11px">Login as:</span>
+  <a href="AgriKonnect_Farmer_Dashboard.html" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:rgba(52,211,153,0.2);border:1px solid rgba(52,211,153,0.4);text-decoration:none;transition:all .2s" onmouseover="this.style.background='rgba(52,211,153,0.35)'" onmouseout="this.style.background='rgba(52,211,153,0.2)'">
+    <span style="font-size:13px">🌾</span>
+    <span style="color:#34d399;font-size:11px;font-weight:700">Kofi Mensah</span>
+    <span style="color:rgba(255,255,255,0.4);font-size:10px">Farmer</span>
+  </a>
+  <a href="AgriKonnect_Buyer_Dashboard.html" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:rgba(96,165,250,0.2);border:1px solid rgba(96,165,250,0.4);text-decoration:none;transition:all .2s" onmouseover="this.style.background='rgba(96,165,250,0.35)'" onmouseout="this.style.background='rgba(96,165,250,0.2)'">
+    <span style="font-size:13px">🛒</span>
+    <span style="color:#93c5fd;font-size:11px;font-weight:700">Abena Asante</span>
+    <span style="color:rgba(255,255,255,0.4);font-size:10px">Buyer</span>
+  </a>
+  <a href="AgriKonnect_Buyer_Dashboard.html" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:rgba(251,191,36,0.2);border:1px solid rgba(251,191,36,0.4);text-decoration:none;transition:all .2s" onmouseover="this.style.background='rgba(251,191,36,0.35)'" onmouseout="this.style.background='rgba(251,191,36,0.2)'">
+    <span style="font-size:13px">🚚</span>
+    <span style="color:#fbbf24;font-size:11px;font-weight:700">Kwame Adusei</span>
+    <span style="color:rgba(255,255,255,0.4);font-size:10px">Distributor</span>
+  </a>
+  <span style="color:rgba(255,255,255,0.3);font-size:12px">|</span>
+  <a href="AgriKonnect_Auth.html" style="color:rgba(255,255,255,0.5);font-size:11px;text-decoration:none" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Login / Register</a>
+  <button onclick="document.getElementById('demoBanner').style.display='none'" style="background:none;border:none;color:rgba(255,255,255,0.3);cursor:pointer;font-size:16px;padding:0 4px;line-height:1" title="Close demo bar">×</button>
+</div>
+<!-- END DEMO USER BANNER -->
+
 
 <!-- NAVBAR -->
 <nav style="background:#00413b;padding:12px 24px;display:flex;align-items:center;justify-content:space-between">
@@ -127,7 +153,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;m
           <span class="font-black" style="color:#00413b;font-size:18px">AgriKonnect</span>
         </div>
 
-        <!-- Tab toggle: Login / Register -->
+        <!-- DEMO QUICK LOGIN -->
+<div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:16px">
+  <p style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.05em;margin-bottom:10px">🎭 DEMO — Click to login instantly</p>
+  <div style="display:flex;gap:8px">
+    <button onclick="quickLogin('farmer')" style="flex:1;padding:8px 6px;border-radius:10px;border:1.5px solid #6ee7b7;background:#f0fdf4;cursor:pointer;transition:all .15s" onmouseover="this.style.background='#d1fae5'" onmouseout="this.style.background='#f0fdf4'">
+      <div style="font-size:18px;margin-bottom:3px">🌾</div>
+      <div style="font-size:11px;font-weight:700;color:#065f46">Kofi Mensah</div>
+      <div style="font-size:10px;color:#6b7280">Farmer</div>
+    </button>
+    <button onclick="quickLogin('buyer')" style="flex:1;padding:8px 6px;border-radius:10px;border:1.5px solid #93c5fd;background:#eff6ff;cursor:pointer;transition:all .15s" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">
+      <div style="font-size:18px;margin-bottom:3px">🛒</div>
+      <div style="font-size:11px;font-weight:700;color:#1e40af">Abena Asante</div>
+      <div style="font-size:10px;color:#6b7280">Buyer</div>
+    </button>
+    <button onclick="quickLogin('distributor')" style="flex:1;padding:8px 6px;border-radius:10px;border:1.5px solid #fde68a;background:#fffbeb;cursor:pointer;transition:all .15s" onmouseover="this.style.background='#fef3c7'" onmouseout="this.style.background='#fffbeb'">
+      <div style="font-size:18px;margin-bottom:3px">🚚</div>
+      <div style="font-size:11px;font-weight:700;color:#92400e">Kwame Adusei</div>
+      <div style="font-size:10px;color:#6b7280">Distributor</div>
+    </button>
+  </div>
+</div>
+<!-- END DEMO QUICK LOGIN -->
+<!-- Tab toggle: Login / Register -->
         <div class="flex p-1 rounded-xl mb-6" style="background:#f1f5f9">
           <button class="tab-btn active" id="loginTab" onclick="switchTab('login')">Sign In</button>
           <button class="tab-btn" id="registerTab" onclick="switchTab('register')">Create Account</button>
@@ -331,20 +379,50 @@ function togglePwd(id, btn) {
   const input = document.getElementById(id);
   input.type = input.type === 'password' ? 'text' : 'password';
 }
+// Demo user credentials
+const DEMO_USERS = {
+  farmer: { name: 'Kofi Mensah', phone: '0244 123 456', password: 'demo123', dashboard: 'AgriKonnect_Farmer_Dashboard.html' },
+  buyer: { name: 'Abena Asante', phone: '0244 789 012', password: 'demo123', dashboard: 'AgriKonnect_Buyer_Dashboard.html' },
+  distributor: { name: 'Kwame Adusei', phone: '0244 345 678', password: 'demo123', dashboard: 'AgriKonnect_Buyer_Dashboard.html' }
+};
+
+function quickLogin(role) {
+  const user = DEMO_USERS[role];
+  // Switch to login tab and fill in credentials
+  switchTab('login');
+  const phoneInput = document.querySelector('#loginForm input[type="text"]');
+  const pwdInput = document.getElementById('loginPwd');
+  if(phoneInput) phoneInput.value = user.phone;
+  if(pwdInput) pwdInput.value = user.password;
+  // Show loading
+  const banner = document.getElementById('loginSuccess');
+  if(banner) { banner.style.display = 'block'; banner.innerHTML = '<p class="text-sm font-semibold" style="color:#065f46">✅ Signing in as ' + user.name + '... Redirecting to dashboard!</p>'; }
+  setTimeout(() => { window.location.href = user.dashboard; }, 1200);
+}
 function handleLogin() {
   document.getElementById('loginSuccess').style.display = 'block';
-  setTimeout(() => { window.location.href = 'AgriKonnect_Buyer_Dashboard.html'; }, 1500);
+  document.getElementById('loginSuccess').innerHTML = '<p class="text-sm font-semibold" style="color:#065f46">✅ Signed in successfully! Redirecting to dashboard...</p>';
+  // Detect if farmer role is selected on register tab
+  const activeRole = document.querySelector('.role-card.active');
+  const role = activeRole ? (activeRole.querySelector('p.font-bold') || {}).textContent : '';
+  const dest = role && role.includes('Farmer') ? 'AgriKonnect_Farmer_Dashboard.html' : 'AgriKonnect_Buyer_Dashboard.html';
+  setTimeout(() => { window.location.href = dest; }, 1500);
 }
 function handleMoMoLogin() {
-  alert('MoMo OTP flow: An SMS will be sent to your MoMo number for verification.');
+  document.getElementById('loginSuccess').style.display = 'block';
+  document.getElementById('loginSuccess').innerHTML = '<p class="text-sm font-semibold" style="color:#065f46">📱 MoMo OTP sent to your number! Redirecting...</p>';
+  setTimeout(() => { window.location.href = 'AgriKonnect_Buyer_Dashboard.html'; }, 1500);
 }
 function handleRegister() {
   if(!document.getElementById('terms').checked){
     alert('Please agree to the Terms of Service to continue.');
     return;
   }
-  alert('Account created! Redirecting to your dashboard...');
-  setTimeout(() => { window.location.href = 'AgriKonnect_Buyer_Dashboard.html'; }, 500);
+  const activeRole = document.querySelector('.role-card.active');
+  const roleText = activeRole ? (activeRole.querySelector('p.font-bold') || {}).textContent || '' : '';
+  const dest = roleText.includes('Farmer') ? 'AgriKonnect_Farmer_Dashboard.html' : 'AgriKonnect_Buyer_Dashboard.html';
+  alert('🎉 Account created! Redirecting to your dashboard...');
+  setTimeout(() => { window.location.href = dest; }, 300);
 }
 // Show left panel on wider screens
 if(window.innerWidth >= 1024) {

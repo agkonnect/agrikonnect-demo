@@ -84,6 +84,32 @@ nav{position:sticky;top:0;z-index:50}
 </style>
 </head>
 <body>
+<!-- DEMO USER BANNER -->
+<div id="demoBanner" style="background:linear-gradient(90deg,#1e3a5f,#1e4d8c);padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <span style="color:rgba(255,255,255,0.7);font-size:11px;font-weight:700;letter-spacing:.05em">🎭 DEMO MODE</span>
+  <span style="color:rgba(255,255,255,0.3);font-size:12px">|</span>
+  <span style="color:rgba(255,255,255,0.6);font-size:11px">Login as:</span>
+  <a href="AgriKonnect_Farmer_Dashboard.html" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:rgba(52,211,153,0.2);border:1px solid rgba(52,211,153,0.4);text-decoration:none;transition:all .2s" onmouseover="this.style.background='rgba(52,211,153,0.35)'" onmouseout="this.style.background='rgba(52,211,153,0.2)'">
+    <span style="font-size:13px">🌾</span>
+    <span style="color:#34d399;font-size:11px;font-weight:700">Kofi Mensah</span>
+    <span style="color:rgba(255,255,255,0.4);font-size:10px">Farmer</span>
+  </a>
+  <a href="AgriKonnect_Buyer_Dashboard.html" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:rgba(96,165,250,0.2);border:1px solid rgba(96,165,250,0.4);text-decoration:none;transition:all .2s" onmouseover="this.style.background='rgba(96,165,250,0.35)'" onmouseout="this.style.background='rgba(96,165,250,0.2)'">
+    <span style="font-size:13px">🛒</span>
+    <span style="color:#93c5fd;font-size:11px;font-weight:700">Abena Asante</span>
+    <span style="color:rgba(255,255,255,0.4);font-size:10px">Buyer</span>
+  </a>
+  <a href="AgriKonnect_Buyer_Dashboard.html" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:rgba(251,191,36,0.2);border:1px solid rgba(251,191,36,0.4);text-decoration:none;transition:all .2s" onmouseover="this.style.background='rgba(251,191,36,0.35)'" onmouseout="this.style.background='rgba(251,191,36,0.2)'">
+    <span style="font-size:13px">🚚</span>
+    <span style="color:#fbbf24;font-size:11px;font-weight:700">Kwame Adusei</span>
+    <span style="color:rgba(255,255,255,0.4);font-size:10px">Distributor</span>
+  </a>
+  <span style="color:rgba(255,255,255,0.3);font-size:12px">|</span>
+  <a href="AgriKonnect_Auth.html" style="color:rgba(255,255,255,0.5);font-size:11px;text-decoration:none" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Login / Register</a>
+  <button onclick="document.getElementById('demoBanner').style.display='none'" style="background:none;border:none;color:rgba(255,255,255,0.3);cursor:pointer;font-size:16px;padding:0 4px;line-height:1" title="Close demo bar">×</button>
+</div>
+<!-- END DEMO USER BANNER -->
+
 
 <!-- TOAST -->
 <div class="toast" id="toast">
@@ -329,7 +355,7 @@ nav{position:sticky;top:0;z-index:50}
           <span class="font-bold text-lg" style="color:#0f172a">₵14.40</span>
         </div>
         <div class="flex gap-3 mb-3">
-          <button onclick="addToCart()" class="flex-1 py-3 rounded-xl font-semibold text-white flex items-center justify-center gap-2" style="background:#059669;font-size:15px">
+          <button onclick="window.location.href='AgriKonnect_Cart_Checkout.html'" class="flex-1 py-3 rounded-xl font-semibold text-white flex items-center justify-center gap-2" style="background:#059669;font-size:15px">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
             Add to Cart
           </button>
@@ -684,7 +710,7 @@ nav{position:sticky;top:0;z-index:50}
     <p class="text-xs" style="color:#64748b">2 kg · ₵14.40 total</p>
     <p class="font-bold text-sm" style="color:#0f172a">Roma Tomatoes</p>
   </div>
-  <button onclick="addToCart()" class="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-white" style="background:#059669">
+  <button onclick="window.location.href='AgriKonnect_Cart_Checkout.html'" class="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-white" style="background:#059669">
     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4"/></svg>
     Add to Cart
   </button>
